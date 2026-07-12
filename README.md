@@ -19,7 +19,7 @@
 
 | 项目 | 说明 | 地址 |
 |------|------|------|
-| sc-datav | Three.js 3D地图 + 热力图可视化 | [urlien/sc-datav](https://github.com/urlien/sc-datav)（fork 自 [knight-L/sc-datav](https://github.com/knight-L/sc-datav)） |
+| sc-datav | Three.js 3D地图 + 热力图可视化 | [knight-L/sc-datav](https://github.com/knight-L/sc-datav) |
 | FlyFish | 拖拽式可视化大屏平台 | [CloudWise-OpenSource/FlyFish](https://github.com/CloudWise-OpenSource/FlyFish) |
 
 ## 相关视频

@@ -4,7 +4,7 @@
 
 ## sc-datav
 
-- **仓库：** [urlien/sc-datav](https://github.com/urlien/sc-datav)（fork 自 [knight-L/sc-datav](https://github.com/knight-L/sc-datav)）
+- **仓库：** [knight-L/sc-datav](https://github.com/knight-L/sc-datav)
 - **作者：** knight-L
 - **许可：** MIT
 - **用途：** Three.js 3D地图 + 热力图可视化，本项目的核心参考
