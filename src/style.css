@@ -452,3 +452,28 @@ body {
   color: var(--text-dim);
   margin-top: 4px;
 }
+
+/* 亮色主题 */
+[data-theme="light"] {
+  --bg: #f5f7fa;
+  --panel: #ffffff;
+  --border: #e0e6f0;
+  --accent: #0066cc;
+  --accent2: #00aa55;
+  --text: #1a1a2e;
+  --text-dim: #6b7a99;
+}
+
+[data-theme="light"] #header {
+  background: linear-gradient(90deg, rgba(0,102,204,0.1) 0%, transparent 50%, rgba(0,170,85,0.1) 100%);
+}
+
+[data-theme="light"] .panel {
+  background: #ffffff;
+}
+
+[data-theme="light"] #search-input,
+[data-theme="light"] .tool-btn,
+[data-theme="light"] .stat-card {
+  background: rgba(255,255,255,0.9);
+}

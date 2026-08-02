@@ -20,6 +20,17 @@ async function main() {
     setupInteraction(camera, canvas)
   }
   
+  // 主题切换
+  const themeBtn = document.getElementById('theme-toggle')
+  if (themeBtn) {
+    let isDark = true
+    themeBtn.addEventListener('click', () => {
+      isDark = !isDark
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light')
+      themeBtn.textContent = isDark ? '🌙' : '☀️'
+    })
+  }
+  
   // 隐藏加载动画
   const loading = document.getElementById('loading')
   if (loading) {
