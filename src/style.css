@@ -477,3 +477,30 @@ body {
 [data-theme="light"] .stat-card {
   background: rgba(255,255,255,0.9);
 }
+
+/* 政策卡片 */
+.policy-card {
+  background: rgba(0,212,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+
+.policy-card:hover {
+  border-color: var(--accent);
+}
+
+.policy-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent2);
+  margin-bottom: 4px;
+}
+
+.policy-desc {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
