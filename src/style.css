@@ -792,3 +792,91 @@ body {
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* 数据筛选器 */
+#filter-container {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.filter-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.filter-reset-btn {
+  background: rgba(255,71,87,0.1);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  padding: 4px 12px;
+  color: var(--danger);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.filter-section {
+  margin-bottom: 12px;
+}
+
+.filter-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  background: rgba(13,18,37,0.9);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 12px;
+  color: var(--text-dim);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip:hover {
+  border-color: var(--accent);
+}
+
+.filter-chip.active {
+  background: rgba(0,212,255,0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.filter-action-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: var(--text-dim);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.filter-action-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}

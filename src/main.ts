@@ -11,6 +11,8 @@ import { initTimeline } from './components/timeline'
 import { initComparison } from './components/comparison'
 import { addKernelDensity, addStandardDeviationalEllipse, addAccessibilityAnalysis } from './components/spatial-analysis'
 import { addBuildings } from './components/buildings'
+import { initFilter } from './components/filter'
+import { initRuralUrban } from './components/rural-urban'
 import './style.css'
 
 async function main() {
@@ -23,6 +25,8 @@ async function main() {
   initExport()
   initTimeline()
   initComparison()
+  initFilter()
+  initRuralUrban()
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
