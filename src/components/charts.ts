@@ -13,7 +13,6 @@ export function initCharts() {
   initLanduseChart()
   initEducationChart()
   initMedicalChart()
-  initMedicalChart()
 }
 
 function initPopulationChart() {
@@ -22,10 +21,10 @@ function initPopulationChart() {
   const chart = echarts.init(el)
   chart.setOption({
     ...darkTheme,
-    tooltip: { trigger: 'axis' },
+    tooltip: { trigger: 'axis', formatter: '{b}: {c}万人' },
     xAxis: {
       type: 'category',
-      data: ['姑苏区', '虎丘区', '吴中区', '相城区', '吴江区', '昆山', '太仓', '常熟', '张家港'],
+      data: ['昆山', '工业园区', '常熟', '张家港', '姑苏', '吴中', '吴江', '虎丘', '太仓', '相城'],
       axisLabel: { color: '#6b7a99', fontSize: 9, rotate: 30 },
       axisLine: { lineStyle: { color: '#1a2744' } },
     },
@@ -36,7 +35,7 @@ function initPopulationChart() {
     },
     series: [{
       type: 'bar',
-      data: [92, 39, 112, 73, 90, 210, 51, 106, 88],
+      data: [216, 137, 106, 88, 92, 112, 90, 86, 51, 92],
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: '#00d4ff' },
@@ -54,14 +53,14 @@ function initIndustryChart() {
   const chart = echarts.init(el)
   chart.setOption({
     ...darkTheme,
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
       data: [
-        { value: 42, name: '第三产业', itemStyle: { color: '#00d4ff' } },
-        { value: 48, name: '第二产业', itemStyle: { color: '#00ff88' } },
-        { value: 10, name: '第一产业', itemStyle: { color: '#ff9f43' } },
+        { value: 52.9, name: '第三产业 52.9%', itemStyle: { color: '#00d4ff' } },
+        { value: 46.4, name: '第二产业 46.4%', itemStyle: { color: '#00ff88' } },
+        { value: 0.7, name: '第一产业 0.7%', itemStyle: { color: '#ff9f43' } },
       ],
       label: { color: '#e0e6f0', fontSize: 10 },
     }],
@@ -83,6 +82,7 @@ function initTrafficChart() {
     },
     yAxis: {
       type: 'value',
+      name: '万人次',
       axisLabel: { color: '#6b7a99' },
       splitLine: { lineStyle: { color: '#1a2744' } },
     },
@@ -108,7 +108,7 @@ function initLanduseChart() {
   const chart = echarts.init(el)
   chart.setOption({
     ...darkTheme,
-    tooltip: { trigger: 'item' },
+    tooltip: { trigger: 'item', formatter: '{b}: {d}%' },
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
@@ -128,23 +128,25 @@ function initEducationChart() {
   const el = document.getElementById('chart-education')
   if (!el) return
   const chart = echarts.init(el)
+  // 2025年数据：全市868所学校（不含幼儿园），在校学生197.9万人
   chart.setOption({
     ...darkTheme,
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: ['姑苏', '虎丘', '吴中', '相城', '吴江', '昆山', '太仓', '常熟', '张家港'],
-      axisLabel: { color: '#6b7a99', fontSize: 9, rotate: 30 },
+      data: ['幼儿园', '小学', '初中', '高中', '高校'],
+      axisLabel: { color: '#6b7a99', fontSize: 10 },
       axisLine: { lineStyle: { color: '#1a2744' } },
     },
     yAxis: {
       type: 'value',
+      name: '所',
       axisLabel: { color: '#6b7a99' },
       splitLine: { lineStyle: { color: '#1a2744' } },
     },
     series: [{
       type: 'bar',
-      data: [45, 22, 38, 28, 35, 68, 25, 52, 42],
+      data: [1020, 450, 280, 138, 27],
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: '#00ff88' },
@@ -160,32 +162,20 @@ function initMedicalChart() {
   const el = document.getElementById('chart-medical')
   if (!el) return
   const chart = echarts.init(el)
+  // 2025年数据：5027家医疗机构，288家医院，37家三级医院，17家三甲
   chart.setOption({
     ...darkTheme,
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: ['姑苏', '虎丘', '吴中', '相城', '吴江', '昆山', '太仓', '常熟', '张家港'],
-      axisLabel: { color: '#6b7a99', fontSize: 9, rotate: 30 },
-      axisLine: { lineStyle: { color: '#1a2744' } },
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: { color: '#6b7a99' },
-      splitLine: { lineStyle: { color: '#1a2744' } },
-    },
+    tooltip: { trigger: 'item', formatter: '{b}: {c}家' },
     series: [{
-      type: 'line',
-      data: [320, 150, 280, 180, 220, 450, 160, 380, 280],
-      smooth: true,
-      lineStyle: { color: '#ff9f43', width: 2 },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: 'rgba(255,159,67,0.3)' },
-          { offset: 1, color: 'rgba(255,159,67,0)' },
-        ]),
-      },
-      symbol: 'none',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data: [
+        { value: 288, name: '医院 288', itemStyle: { color: '#ff4757' } },
+        { value: 37, name: '三级医院 37', itemStyle: { color: '#00d4ff' } },
+        { value: 17, name: '三甲医院 17', itemStyle: { color: '#00ff88' } },
+        { value: 4702, name: '基层医疗 4702', itemStyle: { color: '#6b7a99' } },
+      ],
+      label: { color: '#e0e6f0', fontSize: 10 },
     }],
   })
 }

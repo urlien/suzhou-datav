@@ -1,19 +1,19 @@
 import * as THREE from 'three'
 
-// 苏州市主要区域坐标（近似经纬度→3D坐标映射）
+// 2025年苏州各区真实数据
 const districts = [
-  { name: '姑苏区', lat: 31.30, lon: 120.62, population: 92, gdp: 1200 },
-  { name: '虎丘区', lat: 31.30, lon: 120.57, population: 39, gdp: 800 },
-  { name: '吴中区', lat: 31.26, lon: 120.62, population: 112, gdp: 950 },
-  { name: '相城区', lat: 31.37, lon: 120.62, population: 73, gdp: 680 },
-  { name: '吴江区', lat: 31.16, lon: 120.65, population: 90, gdp: 780 },
-  { name: '昆山市', lat: 31.39, lon: 120.98, population: 210, gdp: 4500 },
-  { name: '太仓市', lat: 31.45, lon: 121.10, population: 51, gdp: 1200 },
-  { name: '常熟市', lat: 31.65, lon: 120.74, population: 106, gdp: 2200 },
-  { name: '张家港市', lat: 31.87, lon: 120.55, population: 88, gdp: 2800 },
+  { name: '昆山市', lat: 31.39, lon: 120.98, population: 216, gdp: 5615 },
+  { name: '工业园区', lat: 31.32, lon: 120.72, population: 137, gdp: 4163 },
+  { name: '张家港市', lat: 31.87, lon: 120.55, population: 88, gdp: 3300 },
+  { name: '常熟市', lat: 31.65, lon: 120.74, population: 106, gdp: 3200 },
+  { name: '吴江区', lat: 31.16, lon: 120.65, population: 90, gdp: 2332 },
+  { name: '虎丘区', lat: 31.30, lon: 120.57, population: 86, gdp: 1766 },
+  { name: '太仓市', lat: 31.45, lon: 121.10, population: 51, gdp: 1654 },
+  { name: '吴中区', lat: 31.26, lon: 120.62, population: 112, gdp: 1590 },
+  { name: '相城区', lat: 31.37, lon: 120.62, population: 92, gdp: 1431 },
+  { name: '姑苏区', lat: 31.30, lon: 120.63, population: 92, gdp: 1048 },
 ]
 
-// 经纬度转3D坐标
 function geoTo3D(lat: number, lon: number, bounds: { minLat: number, maxLat: number, minLon: number, maxLon: number }) {
   const x = ((lon - bounds.minLon) / (bounds.maxLon - bounds.minLon)) * 200 - 100
   const z = ((lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)) * 200 - 100
@@ -42,15 +42,16 @@ export function addHeatmap(scene: THREE.Scene) {
     circle.position.set(x, 0.5, z)
     scene.add(circle)
 
-    // 区域标签（用竖线表示）
-    const labelGeo = new THREE.CylinderGeometry(0.2, 0.2, 5 + intensity * 20, 8)
+    // 柱状标记
+    const pillarHeight = 5 + intensity * 20
+    const labelGeo = new THREE.CylinderGeometry(0.2, 0.2, pillarHeight, 8)
     const labelMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color().setHSL(0.6 - intensity * 0.6, 1, 0.6),
       transparent: true,
       opacity: 0.8,
     })
     const pillar = new THREE.Mesh(labelGeo, labelMat)
-    pillar.position.set(x, (5 + intensity * 20) / 2, z)
+    pillar.position.set(x, pillarHeight / 2, z)
     scene.add(pillar)
   }
 }
