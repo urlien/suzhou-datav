@@ -1,4 +1,4 @@
-# 苏州市数据可视化大屏
+﻿# 苏州市数据可视化大屏
 
 基于 Three.js 的苏州市 3D 数据可视化大屏项目。
 
@@ -27,19 +27,38 @@
 - [threejs大屏可视化，原来基础上增加了热力图](https://www.bilibili.com/video/BV1n4mRBgEth)
 - [3分钟学会拖拽出一张价值上万的可视化大屏](https://www.bilibili.com/video/BV1MqpmeYEDJ)
 
+## 数据资源
+
+### ASTER GDEM V3 数字高程数据
+
+从[地理空间数据云](https://www.gscloud.cn/)下载的 30m 分辨率 DEM 数据，覆盖苏州市全域。
+
+| 网格编号 | 中心经纬度 | 覆盖范围 |
+|----------|-----------|---------|
+| ASTGTMV003_N30E120 | 120.5°E, 30.5°N | 苏州南部 |
+| ASTGTMV003_N31E119 | 119.5°E, 31.5°N | 苏州西部（含太湖） |
+| ASTGTMV003_N31E120 | 120.5°E, 31.5°N | 苏州中部（主城区） |
+| ASTGTMV003_N31E121 | 121.5°E, 31.5°N | 苏州东部（昆山/太仓） |
+| ASTGTMV003_N32E120 | 120.5°E, 32.5°N | 苏州北部（含常熟） |
+
+每个网格包含 `_dem.tif`（高程值）和 `_num.tif`（像元数量）两个文件。
+
+> 网格覆盖示意图见 `苏州gis数据/网格覆盖示意图.png`
+
 ## 项目结构
 
 ```
 suzhou-datav/
 ├── README.md              # 项目说明
+├── 苏州gis数据/            # ASTER GDEM V3 高程数据
+│   ├── 网格覆盖示意图.png
+│   ├── ASTGTMV003_N30E120/
+│   ├── ASTGTMV003_N31E119/
+│   ├── ASTGTMV003_N31E120/
+│   ├── ASTGTMV003_N31E121/
+│   └── ASTGTMV003_N32E120/
 ├── index.html             # 入口页面
-├── package.json           # 依赖配置
-├── vite.config.ts         # Vite 配置
-├── tsconfig.json          # TypeScript 配置
-├── src/
-│   ├── main.ts            # 入口文件
-│   ├── scene.ts           # Three.js 场景初始化
-│   └── style.css          # 样式
+├── src/                   # 源代码
 └── public/                # 静态资源
 ```
 

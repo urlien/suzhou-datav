@@ -4,9 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>苏州市数据可视化大屏</title>
+  <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
-  <canvas id="canvas"></canvas>
+  <div id="app">
+    <div id="header">
+      <h1>苏州市城乡数据可视化平台</h1>
+      <div id="clock"></div>
+    </div>
+    <div id="main">
+      <div id="left-panel" class="panel">
+        <div class="panel-title">📊 人口数据</div>
+        <div id="chart-population" class="chart"></div>
+        <div class="panel-title">🏭 产业结构</div>
+        <div id="chart-industry" class="chart"></div>
+      </div>
+      <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+        <div id="terrain-info"></div>
+      </div>
+      <div id="right-panel" class="panel">
+        <div class="panel-title">🚗 交通流量</div>
+        <div id="chart-traffic" class="chart"></div>
+        <div class="panel-title">🏗️ 土地利用</div>
+        <div id="chart-landuse" class="chart"></div>
+      </div>
+    </div>
+    <div id="footer">
+      <span>数据来源：苏州市自然资源和规划局 | ASTER GDEM V3</span>
+      <span>苏州科技大学 城乡规划</span>
+    </div>
+  </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
