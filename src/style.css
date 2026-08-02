@@ -270,3 +270,32 @@ body {
   color: var(--text-dim);
   margin-top: 2px;
 }
+
+/* 标题栏动画 */
+@keyframes glow {
+  0%, 100% { text-shadow: 0 0 5px rgba(0,212,255,0.5); }
+  50% { text-shadow: 0 0 20px rgba(0,212,255,0.8), 0 0 40px rgba(0,212,255,0.3); }
+}
+
+#header h1 {
+  animation: glow 3s ease-in-out infinite;
+}
+
+/* 统计卡片悬浮效果 */
+.stat-card {
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+
+/* 侧边栏标题动画 */
+.panel-title {
+  transition: color 0.2s;
+}
+
+.panel-title:hover {
+  color: var(--accent2);
+}
