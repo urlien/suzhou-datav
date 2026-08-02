@@ -5,6 +5,8 @@ import { addHeatmap } from './components/heatmap'
 import { addBoundary } from './components/boundary'
 import { setupInteraction } from './components/interaction'
 import { initSearch } from './components/search'
+import { initExport } from './components/export'
+import { animateNumbers, animateCharts } from './components/animation'
 import './style.css'
 
 async function main() {
@@ -13,6 +15,7 @@ async function main() {
   addBoundary(scene)
   initCharts()
   initSearch()
+  initExport()
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
@@ -37,6 +40,10 @@ async function main() {
     loading.classList.add('hidden')
     setTimeout(() => loading.remove(), 500)
   }
+  
+  // 启动数字动画
+  setTimeout(animateNumbers, 600)
+  animateCharts()
 }
 
 main()

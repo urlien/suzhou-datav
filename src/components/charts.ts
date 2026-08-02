@@ -13,6 +13,7 @@ export function initCharts() {
   initLanduseChart()
   initEducationChart()
   initMedicalChart()
+  initTechChart()
 }
 
 function initPopulationChart() {
@@ -176,6 +177,39 @@ function initMedicalChart() {
         { value: 4702, name: '基层医疗 4702', itemStyle: { color: '#6b7a99' } },
       ],
       label: { color: '#e0e6f0', fontSize: 10 },
+    }],
+  })
+}
+
+function initTechChart() {
+  const el = document.getElementById('chart-tech')
+  if (!el) return
+  const chart = echarts.init(el)
+  // 2025年苏州科技创新数据
+  chart.setOption({
+    ...darkTheme,
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: ['高新企业', '专精特新', '专利(万件)', '研发人员(万)'],
+      axisLabel: { color: '#6b7a99', fontSize: 9 },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#6b7a99' },
+      splitLine: { lineStyle: { color: '#1a2744' } },
+    },
+    series: [{
+      type: 'bar',
+      data: [18500, 848, 18.4, 47],
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#ff9f43' },
+          { offset: 1, color: '#aa6600' },
+        ]),
+      },
+      barWidth: '60%',
     }],
   })
 }
