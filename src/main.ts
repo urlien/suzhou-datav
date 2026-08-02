@@ -8,6 +8,7 @@ import { initSearch } from './components/search'
 import { initExport } from './components/export'
 import { animateNumbers, animateCharts } from './components/animation'
 import { initTimeline } from './components/timeline'
+import { initComparison } from './components/comparison'
 import './style.css'
 
 async function main() {
@@ -18,6 +19,7 @@ async function main() {
   initSearch()
   initExport()
   initTimeline()
+  initComparison()
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera

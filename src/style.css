@@ -677,3 +677,85 @@ body {
   cursor: pointer;
   border: 2px solid var(--panel);
 }
+
+/* 数据对比 */
+#comparison-container {
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.comparison-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.comparison-selects {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compare-select {
+  background: rgba(13,18,37,0.9);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+
+.compare-select:focus {
+  border-color: var(--accent);
+}
+
+.compare-vs {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.comparison-table {
+  margin-top: 12px;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.compare-table th {
+  background: rgba(0,212,255,0.1);
+  color: var(--accent);
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.compare-table tr:hover {
+  background: rgba(0,212,255,0.05);
+}
+
+.positive {
+  color: #00ff88;
+}
+
+.negative {
+  color: #ff4757;
+}
