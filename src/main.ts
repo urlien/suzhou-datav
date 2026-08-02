@@ -17,7 +17,7 @@ async function main() {
   const scene = await initScene()
   addHeatmap(scene)
   addBoundary(scene)
-  addBuildings(scene)
+  await addBuildings(scene)
   initCharts()
   initSearch()
   initExport()
