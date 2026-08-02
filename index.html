@@ -32,6 +32,11 @@
         <div class="panel-title">🏭 产业结构</div>
         <div id="chart-industry" class="chart"></div>
       </div>
+      
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="搜索区域..." />
+        <div id="search-results"></div>
+      </div>
       <div id="canvas-container">
         <canvas id="canvas"></canvas>
         <div id="terrain-info"></div>
@@ -39,6 +44,11 @@
       <div id="right-panel" class="panel">
         <div class="panel-title">🚗 交通流量</div>
         <div id="chart-traffic" class="chart"></div>
+        
+        <div class="panel-title">🎓 教育资源</div>
+        <div id="chart-education" class="chart"></div>
+        <div class="panel-title">🏥 医疗资源</div>
+        <div id="chart-medical" class="chart"></div>
         <div class="panel-title">🏗️ 土地利用</div>
         <div id="chart-landuse" class="chart"></div>
       </div>
@@ -49,6 +59,17 @@
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
+
+<div id="district-modal" class="modal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>区域详情</h2>
+      <button class="modal-close">×</button>
+    </div>
+    <div class="modal-body"></div>
+  </div>
+</div>
+
 </body>
 </html>
 

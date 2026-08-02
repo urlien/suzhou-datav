@@ -4,6 +4,7 @@ import { initCharts } from './components/charts'
 import { addHeatmap } from './components/heatmap'
 import { addBoundary } from './components/boundary'
 import { setupInteraction } from './components/interaction'
+import { initSearch } from './components/search'
 import './style.css'
 
 async function main() {
@@ -11,6 +12,7 @@ async function main() {
   addHeatmap(scene)
   addBoundary(scene)
   initCharts()
+  initSearch()
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera

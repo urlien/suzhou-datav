@@ -11,6 +11,9 @@ export function initCharts() {
   initIndustryChart()
   initTrafficChart()
   initLanduseChart()
+  initEducationChart()
+  initMedicalChart()
+  initMedicalChart()
 }
 
 function initPopulationChart() {
@@ -117,6 +120,72 @@ function initLanduseChart() {
         { value: 5, name: '其他', itemStyle: { color: '#6b7a99' } },
       ],
       label: { color: '#e0e6f0', fontSize: 10 },
+    }],
+  })
+}
+
+function initEducationChart() {
+  const el = document.getElementById('chart-education')
+  if (!el) return
+  const chart = echarts.init(el)
+  chart.setOption({
+    ...darkTheme,
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: ['姑苏', '虎丘', '吴中', '相城', '吴江', '昆山', '太仓', '常熟', '张家港'],
+      axisLabel: { color: '#6b7a99', fontSize: 9, rotate: 30 },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#6b7a99' },
+      splitLine: { lineStyle: { color: '#1a2744' } },
+    },
+    series: [{
+      type: 'bar',
+      data: [45, 22, 38, 28, 35, 68, 25, 52, 42],
+      itemStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: '#00ff88' },
+          { offset: 1, color: '#006644' },
+        ]),
+      },
+      barWidth: '60%',
+    }],
+  })
+}
+
+function initMedicalChart() {
+  const el = document.getElementById('chart-medical')
+  if (!el) return
+  const chart = echarts.init(el)
+  chart.setOption({
+    ...darkTheme,
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: ['姑苏', '虎丘', '吴中', '相城', '吴江', '昆山', '太仓', '常熟', '张家港'],
+      axisLabel: { color: '#6b7a99', fontSize: 9, rotate: 30 },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#6b7a99' },
+      splitLine: { lineStyle: { color: '#1a2744' } },
+    },
+    series: [{
+      type: 'line',
+      data: [320, 150, 280, 180, 220, 450, 160, 380, 280],
+      smooth: true,
+      lineStyle: { color: '#ff9f43', width: 2 },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: 'rgba(255,159,67,0.3)' },
+          { offset: 1, color: 'rgba(255,159,67,0)' },
+        ]),
+      },
+      symbol: 'none',
     }],
   })
 }
