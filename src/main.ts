@@ -10,12 +10,14 @@ import { animateNumbers, animateCharts } from './components/animation'
 import { initTimeline } from './components/timeline'
 import { initComparison } from './components/comparison'
 import { addKernelDensity, addStandardDeviationalEllipse, addAccessibilityAnalysis } from './components/spatial-analysis'
+import { addBuildings } from './components/buildings'
 import './style.css'
 
 async function main() {
   const scene = await initScene()
   addHeatmap(scene)
   addBoundary(scene)
+  addBuildings(scene)
   initCharts()
   initSearch()
   initExport()
@@ -30,8 +32,6 @@ async function main() {
   
   // 空间分析按钮
   let kernelDensityMesh: THREE.Mesh | null = null
-  let ellipseMesh: THREE.Line | null = null
-  let accessibilityMeshes: THREE.Mesh[] = []
 
   document.getElementById('btn-kernel-density')?.addEventListener('click', () => {
     const btn = document.getElementById('btn-kernel-density')!
@@ -63,7 +63,6 @@ async function main() {
     const btn = document.getElementById('btn-accessibility')!
     const existing = scene.getObjectByName('accessibility-10min')
     if (existing) {
-      // 移除所有可达性相关对象
       scene.children.filter(c => c.name?.startsWith('accessibility')).forEach(c => scene.remove(c))
       btn.classList.remove('active')
     } else {
@@ -90,7 +89,6 @@ async function main() {
     setTimeout(() => loading.remove(), 500)
   }
   
-  // 启动数字动画
   setTimeout(animateNumbers, 600)
   animateCharts()
 }
