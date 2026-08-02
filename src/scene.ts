@@ -5,7 +5,7 @@ interface DemData {
   points: [number, number, number][]
 }
 
-export async function initScene() {
+export async function initScene(): Promise<THREE.Scene> {
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(0x0a0e1a)
   scene.fog = new THREE.FogExp2(0x0a0e1a, 0.0008)
@@ -150,6 +150,7 @@ export async function initScene() {
     camera.lookAt(0, 10, 0)
     renderer.render(scene, camera)
   }
+  return scene
   animate()
 
   // 响应式
@@ -159,3 +160,5 @@ export async function initScene() {
     renderer.setSize(container.clientWidth, container.clientHeight)
   })
 }
+
+// 热力图和边界在main.ts中单独初始化
