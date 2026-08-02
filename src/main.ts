@@ -7,6 +7,7 @@ import { setupInteraction } from './components/interaction'
 import { initSearch } from './components/search'
 import { initExport } from './components/export'
 import { animateNumbers, animateCharts } from './components/animation'
+import { initTimeline } from './components/timeline'
 import './style.css'
 
 async function main() {
@@ -16,6 +17,7 @@ async function main() {
   initCharts()
   initSearch()
   initExport()
+  initTimeline()
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
