@@ -51,8 +51,8 @@ export async function addBuildings(scene: THREE.Scene) {
       cx /= points.length
       cz /= points.length
 
-      // 简化：只取前6个点（避免过于复杂的多边形）
-      const simplified = points.slice(0, 6)
+      // 简化：只取前5个点（避免过于复杂的多边形，提升性能）
+      const simplified = points.slice(0, 5)
       const base = vertexCount
 
       // 底面顶点
@@ -108,6 +108,7 @@ export async function addBuildings(scene: THREE.Scene) {
     scene.add(mesh)
 
     console.log(`[Buildings] 渲染了 ${buildings.length} 个建筑`)
+    console.log(`[Buildings] 覆盖范围: 纬度 ${bounds.minLat}-${bounds.maxLat}, 经度 ${bounds.minLon}-${bounds.maxLon}`)
   } catch (e) {
     console.warn('[Buildings] 加载失败:', e)
   }
