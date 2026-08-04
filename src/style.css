@@ -938,3 +938,153 @@ body {
   filter: brightness(1.5);
   transition: filter 0.3s;
 }
+
+/* 实时天气面板 */
+.weather-container {
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.weather-main {
+  margin-bottom: 12px;
+}
+
+.weather-temp {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.weather-desc {
+  font-size: 14px;
+  color: var(--text);
+  margin: 4px 0 8px;
+}
+
+.weather-detail {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.weather-forecast {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.forecast-item {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+}
+
+.forecast-date {
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.forecast-temp {
+  color: var(--text);
+  font-weight: bold;
+}
+
+.forecast-desc {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.weather-source {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 8px;
+  opacity: 0.6;
+}
+
+/* 空气质量徽章 */
+.aqi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.aqi-good { background: rgba(0, 255, 136, 0.15); color: #00ff88; }
+.aqi-moderate { background: rgba(255, 159, 67, 0.15); color: #ff9f43; }
+.aqi-unhealthy-sensitive { background: rgba(255, 71, 87, 0.15); color: #ff4757; }
+
+.aqi-value {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* 数据来源标注 */
+.data-annotation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.annotation-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 城乡融合指数 */
+.fusion-summary {
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.fusion-score {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+}
+
+.fusion-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.fusion-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: var(--accent2);
+  line-height: 1;
+}
+
+.fusion-unit {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.fusion-note {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  opacity: 0.6;
+}

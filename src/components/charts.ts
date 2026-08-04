@@ -330,14 +330,14 @@ function initEmploymentChart() {
   if (!el) return
   const chart = echarts.init(el)
   chartInstances.set('employment', chart)
-  // 2025年苏州就业数据
-  // 来源：苏州市人力资源和社会保障局2025年度统计公报
+  // 2025年苏州就业+收入数据
+  // 来源：苏州市人社局2025统计公报 + 苏州市统计局
   chart.setOption({
     ...darkTheme,
     tooltip: { trigger: 'axis' },
     xAxis: {
       type: 'category',
-      data: ['新增就业\n(万人)', '用工备案\n(万人)', '失业保险\n参保(万人)', '创业带动\n就业(万人)', '技能培训\n(万人次)', '新增人才\n(万人)'],
+      data: ['人均可支配\n收入(万元)', '人均消费\n支出(万元)', '城镇收入\n(万元)', '农村收入\n(万元)', '新增就业\n(万人)', '创业带动\n就业(万人)'],
       axisLabel: { color: '#6b7a99', fontSize: 9 },
       axisLine: { lineStyle: { color: '#1a2744' } },
     },
@@ -348,7 +348,7 @@ function initEmploymentChart() {
     },
     series: [{
       type: 'bar',
-      data: [41.52, 549.35, 553.21, 13.24, 13.01, 31.5],
+      data: [8.08, 5.02, 9.01, 5.13, 41.52, 13.24],
       itemStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
           { offset: 0, color: '#a855f7' },

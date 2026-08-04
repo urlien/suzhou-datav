@@ -14,6 +14,9 @@ import { addBuildings } from './components/buildings'
 import { initFilter } from './components/filter'
 import { initRuralUrban } from './components/rural-urban'
 import { initDataStory } from './components/data-story'
+import { fetchWeather, fetchAirQuality, renderWeatherPanel } from './components/realtime'
+import { initDataAnnotations } from './components/data-annotation'
+import { initRuralUrbanIndex } from './components/rural-urban-index'
 import './style.css'
 
 async function main() {
@@ -29,6 +32,16 @@ async function main() {
   initFilter()
   initRuralUrban()
   initDataStory()
+  initDataAnnotations()
+  initRuralUrbanIndex()
+
+  // 实时天气
+  const weatherPanel = document.getElementById('weather-panel')
+  if (weatherPanel) {
+    fetchWeather().then(() => fetchAirQuality()).then(() => {
+      renderWeatherPanel(weatherPanel)
+    })
+  }
   
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera

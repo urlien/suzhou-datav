@@ -76,9 +76,20 @@ function renderStep() {
   const title = document.getElementById('story-title')
   const content = document.getElementById('story-content')
   const progress = document.getElementById('story-progress')
+  const container = document.getElementById('story-container')
 
-  if (title) title.textContent = step.title
-  if (content) content.innerHTML = `<p>${step.content}</p>`
+  // 动画过渡
+  if (content) {
+    content.style.opacity = '0'
+    content.style.transform = 'translateY(10px)'
+    setTimeout(() => {
+      if (title) title.textContent = step.title
+      content.innerHTML = `<p>${step.content}</p>`
+      content.style.opacity = '1'
+      content.style.transform = 'translateY(0)'
+    }, 200)
+  }
+
   if (progress) progress.textContent = `${currentStep + 1}/${storySteps.length}`
 
   clearHighlights()
@@ -92,12 +103,17 @@ function renderStep() {
     })
   }
 
-  // 聚焦图表
+  // 聚焦图表 + 滚动
   if (step.chartFocus) {
     const chartEl = document.getElementById(`chart-${step.chartFocus}`)
     if (chartEl) {
       chartEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
       chartEl.classList.add('chart-focus')
+      // 高亮图表边框动画
+      chartEl.style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.3)'
+      setTimeout(() => {
+        chartEl.style.boxShadow = ''
+      }, 2000)
     }
   }
 }
