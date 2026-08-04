@@ -3,7 +3,7 @@ import { initScene } from './scene'
 import { initCharts } from './components/charts'
 import { addHeatmap } from './components/heatmap'
 import { addBoundary } from './components/boundary'
-import { setupInteraction } from './components/interaction'
+import { setupEnhancedInteraction } from './components/enhanced-interaction'
 import { initSearch } from './components/search'
 import { initExport } from './components/export'
 import { animateNumbers, animateCharts } from './components/animation'
@@ -48,7 +48,7 @@ async function main() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement
   const camera = scene.children.find(c => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
   if (camera && canvas) {
-    setupInteraction(camera, canvas)
+    setupEnhancedInteraction(camera, canvas, scene)
   }
   
   // 空间分析按钮
