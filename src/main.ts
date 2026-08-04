@@ -17,7 +17,9 @@ import { initDataStory } from './components/data-story'
 import { fetchWeather, fetchAirQuality, renderWeatherPanel } from './components/realtime'
 import { initDataAnnotations } from './components/data-annotation'
 import { initRuralUrbanIndex } from './components/rural-urban-index'
+import { exportPDF } from './components/pdf-export'
 import './style.css'
+import './print.css'
 
 async function main() {
   const scene = await initScene()
@@ -101,6 +103,27 @@ async function main() {
     })
   }
   
+  // PDF导出按钮
+  const pdfBtn = document.getElementById('export-pdf')
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', () => {
+      pdfBtn.textContent = '⏳ 生成中...'
+      exportPDF().finally(() => {
+        pdfBtn.textContent = '📄 PDF报告'
+      })
+    })
+  }
+
+  // 投影模式切换
+  const projBtn = document.getElementById('projection-toggle')
+  if (projBtn) {
+    projBtn.addEventListener('click', () => {
+      const isProjection = document.documentElement.getAttribute('data-theme') === 'projection'
+      document.documentElement.setAttribute('data-theme', isProjection ? '' : 'projection')
+      projBtn.textContent = isProjection ? '📽️' : '🌙'
+    })
+  }
+
   // 隐藏加载动画
   const loading = document.getElementById('loading')
   if (loading) {

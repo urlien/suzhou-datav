@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "three": "^0.170.0",
-    "echarts": "^5.6.0"
+    "echarts": "^5.6.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/three": "^0.170.0",
