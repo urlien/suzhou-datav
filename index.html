@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>苏州市数据可视化大屏</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="loading"><div class="spinner"></div><div id="loading-text">加载苏州市数据...</div></div>
+<div id="app">
+    <div id="stats">
+      <div class="stat-card"><div class="stat-value">1297万</div><div class="stat-label">常住人口</div></div>
+      <div class="stat-card"><div class="stat-value">2.77万亿</div><div class="stat-label">GDP</div></div>
+      <div class="stat-card"><div class="stat-value">8657km²</div><div class="stat-label">面积</div></div>
+      <div class="stat-card"><div class="stat-value">10</div><div class="stat-label">区县市</div></div>
+    </div>
+    <div id="header">
+      <h1>苏州市城乡数据可视化平台</h1>
+      <div id="clock"></div>
+
+      <div id="export-container">
+        <button id="projection-toggle" class="tool-btn" title="投影模式">📽️</button>
+        <button id="export-pdf" class="tool-btn" title="导出PDF报告">📄 PDF报告</button>
+        <button id="export-png" class="tool-btn" title="导出PNG">📷</button>
+        <button id="export-csv" class="tool-btn" title="导出CSV">📊</button>
+      </div>
+
+      <div id="spatial-toolbar">
+        <button id="btn-kernel-density" class="tool-btn" title="核密度分析">🔥 核密度</button>
+        <button id="btn-ellipse" class="tool-btn" title="标准差椭圆">⭕ 椭圆分析</button>
+        <button id="btn-accessibility" class="tool-btn" title="可达性分析">⏱️ 可达性</button>
+      </div>
+    </div>
+    <div id="main">
+      <div id="left-panel" class="panel">
+        
+        <div class="panel-title">📋 政策规划</div>
+        <div class="policy-card">
+          <div class="policy-title">城乡融合发展</div>
+          <div class="policy-desc">相城区城乡融合发展三年行动计划（2023-2025）</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-title">乡村振兴</div>
+          <div class="policy-desc">吴江入选国家乡村振兴示范县，114个重点项目，总投资269亿</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-title">国土空间规划</div>
+          <div class="policy-desc">2021-2035年，耕地保有量≥193.77万亩，城镇开发边界</div>
+        </div>
+        
+        <div class="policy-card">
+          <div class="policy-title">🏗️ 重点项目</div>
+          <div class="policy-desc">2025年83个省重大+561个市重点项目，完成投资478.7亿元</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-title">💰 招商引资</div>
+          <div class="policy-desc">2026上半年签约亿元项目1594个，计划总投资5405亿</div>
+        </div>
+        <div class="policy-card">
+          <div class="policy-title">新型工业化</div>
+          <div class="policy-desc">"1030"产业体系，10个重点产业集群+30条产业链</div>
+        </div>
+
+        <div class="panel-title">📊 人口数据</div>
+        <div id="chart-population" class="chart"></div>
+        <div class="panel-title">🏭 产业结构</div>
+        <div id="chart-industry" class="chart"></div>
+      </div>
+      
+      <div id="search-container">
+        <input type="text" id="search-input" placeholder="搜索区域..." />
+        <div id="search-results"></div>
+      </div>
+      <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+        <div id="terrain-info"></div>
+      </div>
+      <div id="right-panel" class="panel">
+        <div class="panel-title">🌤️ 实时天气</div>
+        <div id="weather-panel" class="weather-container"></div>
+        <div class="panel-title">🚗 交通流量</div>
+        <div id="chart-traffic" class="chart"></div>
+        
+        
+        <div class="panel-title">🔬 科技创新</div>
+        <div id="chart-tech" class="chart"></div>
+        <div class="panel-title">🎓 教育资源</div>
+        <div id="chart-education" class="chart"></div>
+        <div class="panel-title">🏥 医疗资源</div>
+        <div id="chart-medical" class="chart"></div>
+        <div class="panel-title">🏗️ 土地利用</div>
+        <div id="chart-landuse" class="chart"></div>
+        <div class="panel-title">🏠 房价均价</div>
+        <div id="chart-housing" class="chart"></div>
+        <div class="panel-title">🌿 生态环境</div>
+        <div id="chart-environment" class="chart"></div>
+        <div class="panel-title">💼 就业数据</div>
+        <div id="chart-employment" class="chart"></div>
+        <div class="panel-title">🏘️ 城乡融合指数</div>
+        <div class="fusion-summary">
+          <div class="fusion-score">
+            <span class="fusion-label">综合指数</span>
+            <span id="fusion-index" class="fusion-value">--</span>
+            <span class="fusion-unit">分</span>
+          </div>
+          <div class="fusion-note">参考：侯爱敏《城乡融合：高水平共同富裕的苏州实践》</div>
+        </div>
+        <div id="chart-rural-urban-index" class="chart"></div>
+      </div>
+    </div>
+    <div id="story-container" style="display:none">
+      <div id="story-header">
+        <h2 id="story-title">数据故事</h2>
+        <div id="story-controls">
+          <button id="story-prev" class="tool-btn">◀</button>
+          <span id="story-progress">1/5</span>
+          <button id="story-next" class="tool-btn">▶</button>
+          <button id="story-close" class="tool-btn">✕</button>
+        </div>
+      </div>
+      <div id="story-content"></div>
+    </div>
+    <button id="story-btn" class="tool-btn" style="position:fixed;bottom:20px;right:20px;z-index:100;">📖 数据故事</button>
+    <div id="footer">
+      <span>数据来源：苏州市自然资源和规划局 | ASTER GDEM V3</span>
+      <span>苏州科技大学 城乡规划</span>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+
+<div id="district-modal" class="modal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>区域详情</h2>
+      <button class="modal-close">×</button>
+    </div>
+    <div class="modal-body"></div>
+  </div>
+</div>
+
+</body>
+</html>
+
+<div id="legend">
+  <div class="legend-title">人口密度</div>
+  <div class="legend-bar"></div>
+  <div class="legend-labels">
+    <span>低</span><span>高</span>
+  </div>
+</div>
+
+<div id="toolbar">
+  <button class="tool-btn active" data-layer="terrain">地形</button>
+  <button class="tool-btn active" data-layer="boundary">边界</button>
+  <div class="toolbar-divider"></div>
+  <span class="toolbar-label">飞线：</span>
+  <button class="tool-btn active" data-flying="population">人口流动</button>
+  <button class="tool-btn" data-flying="transport">交通流量</button>
+  <button class="tool-btn" data-flying="logistics">物流货运</button>
+  <button class="tool-btn" data-flying="economic">经济联系</button>
+</div>
