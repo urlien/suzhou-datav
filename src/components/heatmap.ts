@@ -3,6 +3,7 @@ import { areaData, gdpData, gdpHistoryData, populationData } from "../data/offic
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, getTerrainHeightAtXZ, normalizeDistrictName } from "../utils/geo"
 import { registerFrameCallback } from "../scene"
 import { filterState } from "./filter"
+import { updateChoroplethColors } from "./boundary"
 
 let heatmapVisible = true
 
@@ -191,6 +192,9 @@ export function addHeatmap(scene: THREE.Scene) {
       node.shaderMat.uniforms.uIntensity.value = intensity
       node.shaderMat.uniforms.uOpacity.value = 0.42 + intensity * 0.38
     }
+
+    // 同步更新区县分级设色多边形颜色（Choropleth Map）
+    updateChoroplethColors(scene, intensityByDistrict)
 
     if (legendLabel) {
       const legendTitleEl = document.querySelector("#legend .legend-title")

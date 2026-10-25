@@ -17,6 +17,20 @@ const districtColors: Record<string, number> = {
   '太仓市': 0xff6348,
 }
 
+// 中心区标签错位布局偏移（单位：3D场景坐标），彻底解决中心四区标牌碰撞重叠
+const LABEL_LAYOUT_CONFIG: Record<string, { ox: number; oz: number; height: number }> = {
+  '姑苏区': { ox: 0, oz: -3.5, height: 9.8 },
+  '苏州工业园区': { ox: 6.5, oz: -1.5, height: 8.5 },
+  '虎丘区': { ox: -6.5, oz: 1.5, height: 8.5 },
+  '相城区': { ox: 0, oz: -7.5, height: 8.8 },
+  '吴中区': { ox: -3.0, oz: 6.0, height: 8.0 },
+  '昆山市': { ox: 0, oz: 0, height: 6.5 },
+  '太仓市': { ox: 0, oz: 0, height: 6.5 },
+  '常熟市': { ox: 0, oz: 0, height: 6.5 },
+  '张家港市': { ox: 0, oz: 0, height: 6.5 },
+  '吴江区': { ox: 0, oz: 0, height: 6.5 },
+}
+
 // 苏州工业园区管辖范围边界环（补充国标行政区划 GeoJSON 中未独立列出的工业园区边界）
 const SIP_RING: number[][] = [
   [120.655, 31.355],
@@ -94,6 +108,65 @@ function createBoundaryLine(
   return line
 }
 
+/**
+ * 3D 发光立体边界墙（Glow Wall）
+ * 沿行政边界环挤出一道高度 1.8 场景单位的发光面，底部强辉光，顶部渐变透明
+ */
+function createGlowWall(
+  ring: number[][],
+  color: number,
+  name: string,
+  wallHeight = 1.8,
+): THREE.Mesh {
+  const positions: number[] = []
+  const colors: number[] = []
+  const indices: number[] = []
+
+  const baseC = new THREE.Color(color)
+  const len = ring.length
+
+  for (let i = 0; i < len; i++) {
+    const [lon, lat] = ring[i]
+    const { x, z } = lonLatTo3D(lon, lat)
+    const groundY = getTerrainHeightAtXZ(x, z) + 0.15
+
+    // 底部顶点（亮色高对比）
+    positions.push(x, groundY, z)
+    colors.push(baseC.r, baseC.g, baseC.b, 0.75)
+
+    // 顶部顶点（渐隐消失）
+    positions.push(x, groundY + wallHeight, z)
+    colors.push(baseC.r * 1.2, baseC.g * 1.2, baseC.b * 1.2, 0.0)
+
+    const next = (i + 1) % len
+    const b0 = i * 2
+    const t0 = i * 2 + 1
+    const b1 = next * 2
+    const t1 = next * 2 + 1
+
+    indices.push(b0, b1, t0)
+    indices.push(b1, t1, t0)
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 4))
+  geo.setIndex(indices)
+
+  const mat = new THREE.MeshBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  })
+
+  const mesh = new THREE.Mesh(geo, mat)
+  mesh.userData = { districtName: name, type: 'boundary-wall' }
+  mesh.name = `boundary-wall-${name}`
+  return mesh
+}
+
 function createCenterMarker(
   center: [number, number],
   color: number,
@@ -114,12 +187,18 @@ function createCenterMarker(
   return dot
 }
 
-// 创建 3D 悬浮区县名称标签（Sprite），支持悬停拾取与截图导出
-function createDistrictLabelSprite(
+/**
+ * 创建 3D 悬浮区县名称标签与错位牵引线（Leader Line），防重叠
+ */
+function createDistrictLabelWithLeader(
   center: [number, number],
   color: number,
   name: string,
-): THREE.Sprite {
+): THREE.Group {
+  const labelGroup = new THREE.Group()
+  labelGroup.name = `boundary-label-group-${name}`
+  labelGroup.userData = { districtName: name, type: 'boundary-label-group' }
+
   const displayName = name === '苏州工业园区' ? '工业园区' : name
   const canvas = document.createElement('canvas')
   canvas.width = 256
@@ -128,8 +207,8 @@ function createDistrictLabelSprite(
 
   const hexColor = '#' + color.toString(16).padStart(6, '0')
 
-  // 绘制圆角半透明深色科技标牌
-  ctx.fillStyle = 'rgba(13, 18, 37, 0.86)'
+  // 圆角半透明深色科技标牌
+  ctx.fillStyle = 'rgba(13, 18, 37, 0.88)'
   ctx.strokeStyle = hexColor
   ctx.lineWidth = 3
   ctx.beginPath()
@@ -137,13 +216,13 @@ function createDistrictLabelSprite(
   ctx.fill()
   ctx.stroke()
 
-  // 左侧色点指示器
+  // 标牌左侧光点
   ctx.fillStyle = hexColor
   ctx.beginPath()
   ctx.arc(32, 36, 7, 0, Math.PI * 2)
   ctx.fill()
 
-  // 区县文字
+  // 文字渲染
   ctx.font = 'bold 28px "Microsoft YaHei", "PingFang SC", sans-serif'
   ctx.fillStyle = '#f0f6ff'
   ctx.textAlign = 'center'
@@ -153,20 +232,23 @@ function createDistrictLabelSprite(
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true
 
-  const mat = new THREE.SpriteMaterial({
+  const spriteMat = new THREE.SpriteMaterial({
     map: texture,
     transparent: true,
     depthTest: false,
   })
-  const sprite = new THREE.Sprite(mat)
-  const { x, z } = lonLatTo3D(center[0], center[1])
-  // 对姑苏、虎丘、相城、工业园区等中心密集区微调标签高度，避免视觉重叠
-  const heightBoost =
-    name === '姑苏区' ? 8.2 :
-    name === '苏州工业园区' ? 7.2 :
-    name === '虎丘区' ? 6.4 : 5.6
-  const y = getTerrainHeightAtXZ(x, z) + heightBoost
-  sprite.position.set(x, y, z)
+  const sprite = new THREE.Sprite(spriteMat)
+
+  const { x: gx, z: gz } = lonLatTo3D(center[0], center[1])
+  const gy = getTerrainHeightAtXZ(gx, gz)
+
+  // 错位偏移量
+  const cfg = LABEL_LAYOUT_CONFIG[name] || { ox: 0, oz: 0, height: 6.5 }
+  const targetX = gx + cfg.ox
+  const targetZ = gz + cfg.oz
+  const targetY = gy + cfg.height
+
+  sprite.position.set(targetX, targetY, targetZ)
   sprite.scale.set(11.5, 3.2, 1)
   sprite.renderOrder = 20
   sprite.userData = {
@@ -175,8 +257,28 @@ function createDistrictLabelSprite(
     baseScaleX: 11.5,
     baseScaleY: 3.2,
   }
-  sprite.name = `boundary-label-${name}`
-  return sprite
+  labelGroup.add(sprite)
+
+  // 如果有错位偏移或高度较大，生成发光牵引线（连接实际地面中心与悬浮标牌底部）
+  const leaderPoints = [
+    new THREE.Vector3(gx, gy + 0.5, gz),
+    new THREE.Vector3(targetX, targetY - 1.4, targetZ),
+  ]
+  const lineGeo = new THREE.BufferGeometry().setFromPoints(leaderPoints)
+  const lineMat = new THREE.LineDashedMaterial({
+    color,
+    dashSize: 0.8,
+    gapSize: 0.4,
+    transparent: true,
+    opacity: 0.75,
+    depthWrite: false,
+  })
+  const leaderLine = new THREE.Line(lineGeo, lineMat)
+  leaderLine.computeLineDistances()
+  leaderLine.userData = { districtName: name, type: 'boundary-leader' }
+  labelGroup.add(leaderLine)
+
+  return labelGroup
 }
 
 export async function addBoundary(scene: THREE.Scene) {
@@ -203,32 +305,38 @@ export async function addBoundary(scene: THREE.Scene) {
         const outerRing = polygon[0]
         group.add(createFillMesh(outerRing, color, name, 0.52))
         group.add(createBoundaryLine(outerRing, color, name))
+        group.add(createGlowWall(outerRing, color, name, 1.8))
       }
 
       const center = feature.properties?.center as [number, number] | undefined
       if (center) {
         group.add(createCenterMarker(center, color, name))
-        group.add(createDistrictLabelSprite(center, color, name))
+        group.add(createDistrictLabelWithLeader(center, color, name))
       }
     }
 
-    // 补充第10个板块：苏州工业园区边界、填充与悬浮地名标签
+    // 补充第10个板块：苏州工业园区边界、发光墙与悬浮牵引地名标签
     const sipColor = districtColors['苏州工业园区']
     group.add(createFillMesh(SIP_RING, sipColor, '苏州工业园区', 0.65))
     group.add(createBoundaryLine(SIP_RING, sipColor, '苏州工业园区'))
+    group.add(createGlowWall(SIP_RING, sipColor, '苏州工业园区', 1.8))
     group.add(createCenterMarker([120.72, 31.32], sipColor, '苏州工业园区'))
-    group.add(createDistrictLabelSprite([120.72, 31.32], sipColor, '苏州工业园区'))
+    group.add(createDistrictLabelWithLeader([120.72, 31.32], sipColor, '苏州工业园区'))
 
     scene.add(group)
 
-    // 响应筛选器变化：动态显隐/半透明化未选中区县的边界与标签
+    // 响应筛选器变化：动态显隐/半透明化未选中区县的边界、发光墙与标签
     document.addEventListener('filter-changed', () => {
       const selectedSet = new Set(filterState.selectedDistricts.map(normalizeDistrictName))
       group.children.forEach(obj => {
         const dName = obj.userData?.districtName
         if (!dName) return
         const isSelected = selectedSet.size === 0 || selectedSet.has(normalizeDistrictName(dName))
-        if (obj.userData.type === 'boundary-label' || obj.userData.type === 'boundary-marker') {
+        if (
+          obj.userData.type === 'boundary-label-group' ||
+          obj.userData.type === 'boundary-marker' ||
+          obj.userData.type === 'boundary-wall'
+        ) {
           obj.visible = isSelected
         } else if (obj instanceof THREE.Mesh && obj.userData.type === 'boundary-fill') {
           const mat = obj.material as THREE.MeshBasicMaterial
@@ -241,10 +349,47 @@ export async function addBoundary(scene: THREE.Scene) {
       })
     })
 
-    console.log(`[Boundary] 加载了 ${features.length + 1} 个区县/园区边界与 3D 悬浮标注`)
+    console.log(`[Boundary] 加载了 ${features.length + 1} 个区县/园区边界、发光立体边界墙与防重叠标注`)
   } catch (e) {
     console.error('[Boundary] 加载失败:', e)
   }
+}
+
+/**
+ * 分级设色图（Choropleth Map）：
+ * 根据外部传入的各区县指标强度（0~1），动态更新多边形填充面色相与透明度
+ */
+export function updateChoroplethColors(scene: THREE.Scene, intensityMap: Record<string, number>) {
+  const group = scene.getObjectByName('boundary-group')
+  if (!group) return
+
+  group.children.forEach(obj => {
+    if (obj instanceof THREE.Mesh && obj.userData?.type === 'boundary-fill') {
+      const dName = obj.userData.districtName
+      if (!dName) return
+      const intensity = Math.max(0, Math.min(1, intensityMap[normalizeDistrictName(dName)] ?? 0.3))
+
+      // 经典多级渐变：深蓝(0.0) -> 青(0.25) -> 翠绿(0.5) -> 金黄(0.75) -> 橙红(1.0)
+      const color = new THREE.Color()
+      if (intensity < 0.25) {
+        color.setRGB(0.0, 0.4 + intensity * 2.0, 0.9)
+      } else if (intensity < 0.5) {
+        const t = (intensity - 0.25) / 0.25
+        color.setRGB(0.0, 0.9, 0.9 - t * 0.5)
+      } else if (intensity < 0.75) {
+        const t = (intensity - 0.5) / 0.25
+        color.setRGB(t * 1.0, 0.9 - t * 0.1, 0.2)
+      } else {
+        const t = (intensity - 0.75) / 0.25
+        color.setRGB(1.0, 0.8 - t * 0.5, 0.1)
+      }
+
+      const mat = obj.material as THREE.MeshBasicMaterial
+      mat.color.copy(color)
+      obj.userData.baseOpacity = 0.22 + intensity * 0.38
+      mat.opacity = obj.userData.baseOpacity
+    }
+  })
 }
 
 export function highlightDistrictBoundary(scene: THREE.Scene, targetName: string | null) {
@@ -256,12 +401,15 @@ export function highlightDistrictBoundary(scene: THREE.Scene, targetName: string
     if (obj instanceof THREE.Mesh && obj.userData?.type === 'boundary-fill') {
       const mat = obj.material as THREE.MeshBasicMaterial
       const isMatch = normalized && obj.userData.districtName === normalized
-      mat.opacity = isMatch ? 0.72 : (normalized ? 0.16 : obj.userData.baseOpacity)
-    } else if (obj instanceof THREE.Sprite && obj.userData?.type === 'boundary-label') {
+      mat.opacity = isMatch ? 0.75 : (normalized ? 0.12 : obj.userData.baseOpacity)
+    } else if (obj.userData?.type === 'boundary-label-group') {
       const isMatch = normalized && obj.userData.districtName === normalized
-      const sx = obj.userData.baseScaleX || 11.5
-      const sy = obj.userData.baseScaleY || 3.2
-      obj.scale.set(isMatch ? sx * 1.22 : sx, isMatch ? sy * 1.22 : sy, 1)
+      const sprite = obj.children.find(c => c instanceof THREE.Sprite) as THREE.Sprite | undefined
+      if (sprite) {
+        const sx = sprite.userData.baseScaleX || 11.5
+        const sy = sprite.userData.baseScaleY || 3.2
+        sprite.scale.set(isMatch ? sx * 1.25 : sx, isMatch ? sy * 1.25 : sy, 1)
+      }
     }
   })
 }
