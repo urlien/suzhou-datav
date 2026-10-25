@@ -130,7 +130,7 @@ export function addKernelDensity(scene: THREE.Scene): THREE.Mesh {
 
   const mesh = new THREE.Mesh(geometry, material)
   mesh.rotation.x = -Math.PI / 2
-  mesh.position.y = 0.2
+  mesh.position.y = 0.55
   mesh.name = 'kernel-density'
   scene.add(mesh)
 
@@ -417,18 +417,18 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
       if (avgT > 65) continue // 超出1小时等时圈外不着色
 
       // 根据到达时间赋予等时圈渐变分级色（10min 翠绿, 20min 青天蓝, 30min 深蓝紫, 60min 优雅紫）
-      let rCol = 0, gCol = 0, bCol = 0, alpha = 0.16
+      let rCol = 0, gCol = 0, bCol = 0, alpha = 0.28
       if (avgT <= 10) {
-        rCol = 0.0; gCol = 1.0; bCol = 0.55; alpha = 0.38
+        rCol = 0.0; gCol = 1.0; bCol = 0.55; alpha = 0.65
       } else if (avgT <= 20) {
         const t = (avgT - 10) / 10
-        rCol = 0.0; gCol = 0.85 - t * 0.1; bCol = 1.0; alpha = 0.28
+        rCol = 0.0; gCol = 0.85 - t * 0.1; bCol = 1.0; alpha = 0.52
       } else if (avgT <= 35) {
         const t = (avgT - 20) / 15
-        rCol = 0.25 + t * 0.35; gCol = 0.6 - t * 0.3; bCol = 1.0; alpha = 0.22
+        rCol = 0.25 + t * 0.35; gCol = 0.6 - t * 0.3; bCol = 1.0; alpha = 0.42
       } else {
         const t = (avgT - 35) / 25
-        rCol = 0.65 + t * 0.25; gCol = 0.25; bCol = 0.95; alpha = 0.16
+        rCol = 0.65 + t * 0.25; gCol = 0.25; bCol = 0.95; alpha = 0.32
       }
 
       const p00x = (c / (gridN - 1)) * 2 * extent - extent
@@ -440,10 +440,11 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
       const p11x = p10x
       const p11z = p01z
 
-      const y00 = getTerrainHeightAtXZ(p00x, p00z) + 0.5
-      const y10 = getTerrainHeightAtXZ(p10x, p10z) + 0.5
-      const y01 = getTerrainHeightAtXZ(p01x, p01z) + 0.5
-      const y11 = getTerrainHeightAtXZ(p11x, p11z) + 0.5
+      // 适当抬升，确保位于行政区划填充面之上，清晰展示星芒走廊
+      const y00 = getTerrainHeightAtXZ(p00x, p00z) + 0.95
+      const y10 = getTerrainHeightAtXZ(p10x, p10z) + 0.95
+      const y01 = getTerrainHeightAtXZ(p01x, p01z) + 0.95
+      const y11 = getTerrainHeightAtXZ(p11x, p11z) + 0.95
 
       positions.push(p00x, y00, p00z, p10x, y10, p10z, p01x, y01, p01z, p11x, y11, p11z)
       for (let k = 0; k < 4; k++) colors.push(rCol, gCol, bCol, alpha)
@@ -467,15 +468,92 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
   const isoMesh = new THREE.Mesh(isoGeo, isoMat)
   group.add(isoMesh)
 
+  // 4. 构建 10/20/35/60 分钟高亮发光等时线轮廓（Marching edges）
+  const thresholds = [
+    { t: 10, color: 0x00ff88 },
+    { t: 20, color: 0x00d4ff },
+    { t: 35, color: 0x70a1ff },
+    { t: 60, color: 0xd980fa },
+  ]
+
+  thresholds.forEach(({ t, color }) => {
+    const linePts: THREE.Vector3[] = []
+    for (let r = 0; r < gridN - 1; r++) {
+      for (let c = 0; c < gridN - 1; c++) {
+        const t00 = timeGrid[r][c]
+        const t10 = timeGrid[r][c + 1]
+        const t01 = timeGrid[r + 1][c]
+        const t11 = timeGrid[r + 1][c + 1]
+
+        const p00x = (c / (gridN - 1)) * 2 * extent - extent
+        const p00z = (r / (gridN - 1)) * 2 * extent - extent
+        const p10x = ((c + 1) / (gridN - 1)) * 2 * extent - extent
+        const p10z = p00z
+        const p01x = p00x
+        const p01z = ((r + 1) / (gridN - 1)) * 2 * extent - extent
+        const p11x = p10x
+        const p11z = p01z
+
+        const crossings: { x: number; z: number }[] = []
+
+        // 底边 (r, c) -> (r, c+1)
+        if ((t00 - t) * (t10 - t) <= 0 && t00 !== t10) {
+          const u = (t - t00) / (t10 - t00)
+          crossings.push({ x: p00x + (p10x - p00x) * u, z: p00z })
+        }
+        // 右边 (r, c+1) -> (r+1, c+1)
+        if ((t10 - t) * (t11 - t) <= 0 && t10 !== t11) {
+          const u = (t - t10) / (t11 - t10)
+          crossings.push({ x: p10x, z: p10z + (p11z - p10z) * u })
+        }
+        // 顶边 (r+1, c) -> (r+1, c+1)
+        if ((t01 - t) * (t11 - t) <= 0 && t01 !== t11) {
+          const u = (t - t01) / (t11 - t01)
+          crossings.push({ x: p01x + (p11x - p01x) * u, z: p01z })
+        }
+        // 左边 (r, c) -> (r+1, c)
+        if ((t00 - t) * (t01 - t) <= 0 && t00 !== t01) {
+          const u = (t - t00) / (t01 - t00)
+          crossings.push({ x: p00x, z: p00z + (p01z - p00z) * u })
+        }
+
+        if (crossings.length >= 2) {
+          const p1 = crossings[0]
+          const p2 = crossings[1]
+          const y1 = getTerrainHeightAtXZ(p1.x, p1.z) + 1.12
+          const y2 = getTerrainHeightAtXZ(p2.x, p2.z) + 1.12
+          linePts.push(new THREE.Vector3(p1.x, y1, p1.z), new THREE.Vector3(p2.x, y2, p2.z))
+        }
+      }
+    }
+
+    if (linePts.length > 0) {
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts)
+      const lineMat = new THREE.LineBasicMaterial({
+        color,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.9,
+      })
+      group.add(new THREE.LineSegments(lineGeo, lineMat))
+    }
+  })
+
   // 中心火车站枢纽发光立标
   const centerY = getTerrainHeightAtXZ(startGeo.x, startGeo.z)
-  const marker = new THREE.Mesh(
-    new THREE.ConeGeometry(1.6, 5.5, 14),
+  const pillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.5, 0.5, 8.5, 16),
     new THREE.MeshBasicMaterial({ color: 0x00ff88 })
   )
-  marker.position.set(startGeo.x, centerY + 3.2, startGeo.z)
-  marker.name = 'accessibility-center'
-  group.add(marker)
+  pillar.position.set(startGeo.x, centerY + 4.25, startGeo.z)
+  group.add(pillar)
+
+  const topSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(1.3, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00ff88 })
+  )
+  topSphere.position.set(startGeo.x, centerY + 9.0, startGeo.z)
+  group.add(topSphere)
 
   scene.add(group)
   return group

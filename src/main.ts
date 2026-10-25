@@ -111,10 +111,11 @@ async function main() {
   })
 
   // 空间分析按钮（复用缓存图层，避免重复创建/销毁导致显存泄漏）
+  const legendTitleEl = document.querySelector("#legend .legend-title")
+
   document.getElementById("btn-kernel-density")?.addEventListener("click", () => {
     const btn = document.getElementById("btn-kernel-density")!
     const existing = scene.getObjectByName("kernel-density")
-    const legendTitleEl = document.querySelector("#legend .legend-title")
     if (existing && existing.visible) {
       existing.visible = false
       btn.classList.remove("active")
@@ -144,9 +145,11 @@ async function main() {
     if (existing && existing.visible) {
       existing.visible = false
       btn.classList.remove("active")
+      if (legendTitleEl) legendTitleEl.textContent = "人口密度热力"
     } else {
       addAccessibilityAnalysis(scene)
       btn.classList.add("active")
+      if (legendTitleEl) legendTitleEl.textContent = "中心枢纽交通等时圈 (10~60min)"
     }
   })
 
