@@ -56,15 +56,15 @@ export async function addBuildings(scene: THREE.Scene) {
       cx /= rawPoints.length
       cz /= rawPoints.length
 
-      // 计算当前基底半径并做适度视觉放大，避免在大尺度3D地图中小于1像素
+      // 计算当前基底半径（在 3.5x 紧凑市域比例下控制在真实建筑物尺度）
       let maxR = 0
       for (const p of rawPoints) {
         const r = Math.hypot(p.x - cx, p.z - cz)
         if (r > maxR) maxR = r
       }
       const isLandmark = Boolean(building.name) || building.height >= 80
-      const targetMinR = isLandmark ? 0.24 : 0.11
-      const targetMaxR = isLandmark ? 0.55 : 0.22
+      const targetMinR = isLandmark ? 0.18 : 0.08
+      const targetMaxR = isLandmark ? 0.42 : 0.18
       const scaleFactor = maxR > 1e-5
         ? Math.min(targetMaxR / maxR, Math.max(1, targetMinR / maxR))
         : 1
@@ -74,20 +74,21 @@ export async function addBuildings(scene: THREE.Scene) {
         z: cz + (p.z - cz) * scaleFactor,
       }))
 
-      // 采样建筑所在位置的真实地形高度
-      const baseY = getTerrainHeightAtXZ(cx, cz) + 0.15
+      // 采样真实地形高程
+      const baseY = getTerrainHeightAtXZ(cx, cz) + 0.12
       const clampedHeight = Math.min(Math.max(building.height || 12, 6), 450)
+      // 高度缩放与地形 DEM 比例（0~6 单位）保持和谐，消除细高针刺感
       const heightScale = isLandmark
-        ? Math.max(1.8, clampedHeight / 16)
-        : Math.max(0.55, clampedHeight / 14)
+        ? Math.max(1.2, clampedHeight / 28)
+        : Math.max(0.38, clampedHeight / 36)
 
-      // 按高度赋予建筑白膜渐变色彩（高层地标呈亮青金色，普通建筑呈科技白蓝）
-      const hRatio = Math.min(clampedHeight / 220, 1)
-      const baseR = 0.72 + hRatio * 0.25
-      const baseG = 0.82 + hRatio * 0.16
-      const baseB = 0.94 + hRatio * 0.06
-      const topR = isLandmark ? 0.2 + hRatio * 0.8 : 0.85
-      const topG = isLandmark ? 0.88 + hRatio * 0.1 : 0.92
+      // 按建筑高度赋予科技感渐变色彩（高层地标呈亮青金色，普通建筑呈科技冰蓝）
+      const hRatio = Math.min(clampedHeight / 240, 1)
+      const baseR = 0.18 + hRatio * 0.15
+      const baseG = 0.32 + hRatio * 0.25
+      const baseB = 0.55 + hRatio * 0.2
+      const topR = isLandmark ? 0.2 + hRatio * 0.75 : 0.45 + hRatio * 0.4
+      const topG = isLandmark ? 0.88 + hRatio * 0.12 : 0.82 + hRatio * 0.15
       const topB = 1.0
 
       const base = vertexCount
@@ -96,7 +97,7 @@ export async function addBuildings(scene: THREE.Scene) {
       // 底面顶点
       for (const p of points) {
         positions.push(p.x, baseY, p.z)
-        colors.push(baseR * 0.65, baseG * 0.65, baseB * 0.65)
+        colors.push(baseR * 0.7, baseG * 0.7, baseB * 0.7)
       }
 
       // 顶面顶点
@@ -134,10 +135,11 @@ export async function addBuildings(scene: THREE.Scene) {
     const material = new THREE.MeshPhongMaterial({
       vertexColors: true,
       transparent: true,
-      opacity: 0.85,
-      shininess: 35,
-      emissive: new THREE.Color(0x182838),
-      emissiveIntensity: 0.35,
+      opacity: 0.88,
+      shininess: 45,
+      specular: new THREE.Color(0x00d4ff),
+      emissive: new THREE.Color(0x0d1a2d),
+      emissiveIntensity: 0.4,
       side: THREE.DoubleSide,
     })
 

@@ -199,15 +199,16 @@ export function addFlyingLines(scene: THREE.Scene) {
 
   console.log(`[FlyingLines] 创建了 4 套飞线系统，当前显示: ${flyingLineSystems[0].description}`)
 
-  // 注册到主场景统一渲染循环
-  registerFrameCallback(() => {
+  // 注册到主场景统一渲染循环（基于 deltaSec 归一化粒子流速，彻底消除高刷新率屏幕下的速度翻倍现象）
+  registerFrameCallback((_timeSec, deltaSec) => {
+    const dt = deltaSec || 0.016
     scene.children.forEach(child => {
       if (!groupNames.includes(child.name) || !child.visible) return
 
       child.children.forEach(obj => {
         if (obj.userData.curve) {
           const data = obj.userData
-          data.progress += data.speed
+          data.progress += data.speed * (dt * 60)
           if (data.progress > 1) data.progress -= 1
           const point = data.curve.getPoint(data.progress)
           obj.position.copy(point)
