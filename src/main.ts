@@ -1,18 +1,17 @@
-﻿import * as THREE from "three"
-import { initScene } from "./scene"
-import { initCharts } from "./components/charts"
+import * as THREE from "three"
+import { initScene, resetCameraView, startEntranceAnimation, updateSceneTheme } from "./scene"
+import { initCharts, resizeAllCharts, updateChartsTheme } from "./components/charts"
 import { addHeatmap, toggleHeatmap } from "./components/heatmap"
-import { addFlyingLines, toggleFlyingLines, switchFlyingLineSystem } from "./components/flying-lines"
-import { applySatelliteTexture } from "./components/satellite-texture"
-import { addBoundary, toggleBoundary } from "./components/boundary"
+import { addFlyingLines, switchFlyingLineSystem } from "./components/flying-lines"
+import { addBoundary, highlightDistrictBoundary, toggleBoundary } from "./components/boundary"
 import { setupEnhancedInteraction } from "./components/enhanced-interaction"
 import { initSearch } from "./components/search"
 import { initExport } from "./components/export"
-import { animateNumbers, animateCharts } from "./components/animation"
+import { animateNumbers } from "./components/animation"
 import { initTimeline } from "./components/timeline"
 import { initComparison } from "./components/comparison"
 import { addKernelDensity, addStandardDeviationalEllipse, addAccessibilityAnalysis } from "./components/spatial-analysis"
-import { addBuildings } from "./components/buildings"
+import { addBuildings, toggleBuildings } from "./components/buildings"
 import { initFilter } from "./components/filter"
 import { initRuralUrban } from "./components/rural-urban"
 import { initDataStory } from "./components/data-story"
@@ -27,8 +26,13 @@ async function main() {
   const scene = await initScene()
   addHeatmap(scene)
   addFlyingLines(scene)
-  await addBoundary(scene)
-  await addBuildings(scene)
+
+  // 并行加载行政边界与3D建筑数据，缩短首屏等待时间
+  await Promise.all([
+    addBoundary(scene),
+    addBuildings(scene)
+  ])
+
   initCharts()
   initSearch()
   initExport()
@@ -36,40 +40,46 @@ async function main() {
   initComparison()
   initFilter()
   initRuralUrban()
-  initDataStory()
+  initDataStory(scene)
   initDataAnnotations()
   initRuralUrbanIndex()
 
+  // 先渲染默认实时气象占位，后台拉取完成后平滑刷新
   const weatherPanel = document.getElementById("weather-panel")
   if (weatherPanel) {
-    fetchWeather().then(() => fetchAirQuality()).then(() => {
+    renderWeatherPanel(weatherPanel)
+    Promise.all([fetchWeather(), fetchAirQuality()]).then(() => {
       renderWeatherPanel(weatherPanel)
     })
   }
-  
+
   const canvas = document.getElementById("canvas") as HTMLCanvasElement
   const camera = scene.getObjectByProperty("type", "PerspectiveCamera") as THREE.PerspectiveCamera
   if (camera && canvas) {
     setupEnhancedInteraction(camera, canvas, scene)
-    console.log("[Main] 增强交互已启动")
-  } else {
-    console.warn("[Main] 找不到 camera 或 canvas，交互未启动")
   }
-  
-  // 底部工具栏 - 图层切换
+
+  // 底部工具栏 - 4个图层切换（地形、行政边界、人口热力、3D建筑）
   const toolbar = document.getElementById("toolbar")
   if (toolbar) {
     toolbar.querySelectorAll("button[data-layer]").forEach(btn => {
       btn.addEventListener("click", () => {
         const layer = btn.getAttribute("data-layer")
-        btn.classList.toggle("active")
-
         if (layer === "terrain") {
-          scene.children.forEach(c => {
-            if (c.type === "Mesh" && c.name !== "buildings") c.visible = btn.classList.contains("active")
-          })
+          const isActive = btn.classList.toggle("active")
+          const terrain = scene.getObjectByName("terrain")
+          const grid = scene.getObjectByName("grid-helper")
+          if (terrain) terrain.visible = isActive
+          if (grid) grid.visible = isActive
         } else if (layer === "boundary") {
-          toggleBoundary(scene)
+          const visible = toggleBoundary(scene)
+          btn.classList.toggle("active", visible)
+        } else if (layer === "heatmap") {
+          const visible = toggleHeatmap(scene)
+          btn.classList.toggle("active", visible)
+        } else if (layer === "buildings") {
+          const visible = toggleBuildings(scene)
+          btn.classList.toggle("active", visible)
         }
       })
     })
@@ -82,41 +92,46 @@ async function main() {
     logistics: 2,
     economic: 3,
   }
-  toolbar.querySelectorAll("button[data-flying]").forEach(btn => {
+  toolbar?.querySelectorAll("button[data-flying]").forEach(btn => {
     btn.addEventListener("click", () => {
       const systemName = btn.getAttribute("data-flying")!
       const index = flyingSystemMap[systemName]
       if (index !== undefined) {
         switchFlyingLineSystem(scene, index)
-        // 更新按钮状态
-        toolbar.querySelectorAll("button[data-flying]").forEach(b => b.classList.remove("active"))
+        toolbar?.querySelectorAll("button[data-flying]").forEach(b => b.classList.remove("active"))
         btn.classList.add("active")
       }
     })
   })
 
-  // 空间分析按钮
-  let kernelDensityMesh: THREE.Mesh | null = null
+  // 视角复位按钮
+  document.getElementById("btn-reset-view")?.addEventListener("click", () => {
+    highlightDistrictBoundary(scene, null)
+    resetCameraView()
+  })
+
+  // 空间分析按钮（复用缓存图层，避免重复创建/销毁导致显存泄漏）
+  const legendTitleEl = document.querySelector("#legend .legend-title")
 
   document.getElementById("btn-kernel-density")?.addEventListener("click", () => {
     const btn = document.getElementById("btn-kernel-density")!
-    if (kernelDensityMesh) {
-      scene.remove(kernelDensityMesh)
-      kernelDensityMesh = null
+    const existing = scene.getObjectByName("kernel-density")
+    if (existing && existing.visible) {
+      existing.visible = false
       btn.classList.remove("active")
+      if (legendTitleEl) legendTitleEl.textContent = "人口密度热力"
     } else {
-      kernelDensityMesh = addKernelDensity(scene)
+      addKernelDensity(scene)
       btn.classList.add("active")
+      if (legendTitleEl) legendTitleEl.textContent = "A级景区核密度"
     }
   })
 
   document.getElementById("btn-ellipse")?.addEventListener("click", () => {
     const btn = document.getElementById("btn-ellipse")!
-    const existing = scene.getObjectByName("std-ellipse")
-    if (existing) {
-      scene.remove(existing)
-      const center = scene.getObjectByName("ellipse-center")
-      if (center) scene.remove(center)
+    const existing = scene.getObjectByName("std-ellipse-group")
+    if (existing && existing.visible) {
+      existing.visible = false
       btn.classList.remove("active")
     } else {
       addStandardDeviationalEllipse(scene)
@@ -126,53 +141,99 @@ async function main() {
 
   document.getElementById("btn-accessibility")?.addEventListener("click", () => {
     const btn = document.getElementById("btn-accessibility")!
-    const existing = scene.getObjectByName("accessibility-10min")
-    if (existing) {
-      scene.children.filter(c => c.name?.startsWith("accessibility")).forEach(c => scene.remove(c))
+    const existing = scene.getObjectByName("accessibility-group")
+    if (existing && existing.visible) {
+      existing.visible = false
       btn.classList.remove("active")
+      if (legendTitleEl) legendTitleEl.textContent = "人口密度热力"
     } else {
       addAccessibilityAnalysis(scene)
       btn.classList.add("active")
+      if (legendTitleEl) legendTitleEl.textContent = "中心枢纽交通等时圈 (10~60min)"
     }
   })
-  
+
+  // 底部综合分析抽屉（历年时间轴 / 区县对比 / 数据筛选）
+  const drawer = document.getElementById("analysis-drawer")
+  const drawerCloseBtn = document.getElementById("drawer-close")
+  const drawerTabs = document.querySelectorAll<HTMLButtonElement>(".drawer-tab-btn")
+  const drawerPanes: Record<string, HTMLElement | null> = {
+    timeline: document.getElementById("timeline-container"),
+    comparison: document.getElementById("comparison-container"),
+    filter: document.getElementById("filter-container"),
+  }
+
+  drawerTabs.forEach(tabBtn => {
+    tabBtn.addEventListener("click", () => {
+      const targetKey = tabBtn.getAttribute("data-drawer") || ""
+      const isAlreadyActive = tabBtn.classList.contains("active") && !drawer?.classList.contains("hidden")
+
+      if (isAlreadyActive) {
+        drawer?.classList.add("hidden")
+        drawerTabs.forEach(b => b.classList.remove("active"))
+        return
+      }
+
+      drawerTabs.forEach(b => b.classList.toggle("active", b === tabBtn))
+      Object.entries(drawerPanes).forEach(([key, pane]) => {
+        if (pane) pane.style.display = key === targetKey ? "block" : "none"
+      })
+      drawer?.classList.remove("hidden")
+      setTimeout(() => resizeAllCharts(), 80)
+    })
+  })
+
+  drawerCloseBtn?.addEventListener("click", () => {
+    drawer?.classList.add("hidden")
+    drawerTabs.forEach(b => b.classList.remove("active"))
+  })
+
+  // 主题与投影模式切换（同步驱动 3D 场景背景与 ECharts 图表主题色）
   const themeBtn = document.getElementById("theme-toggle")
+  const projBtn = document.getElementById("projection-toggle")
   if (themeBtn) {
-    let isDark = true
     themeBtn.addEventListener("click", () => {
-      isDark = !isDark
-      document.documentElement.setAttribute("data-theme", isDark ? "" : "light")
-      themeBtn.textContent = isDark ? "🌙" : "☀️"
+      const currentTheme = document.documentElement.getAttribute("data-theme")
+      const nextTheme = currentTheme === "light" ? "" : "light"
+      document.documentElement.setAttribute("data-theme", nextTheme)
+      themeBtn.textContent = nextTheme === "light" ? "☀️" : "🌙"
+      if (projBtn) projBtn.textContent = "📽️"
+      updateSceneTheme(scene, nextTheme)
+      updateChartsTheme(nextTheme)
     })
   }
-  
+
+  if (projBtn) {
+    projBtn.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme")
+      const nextTheme = currentTheme === "projection" ? "" : "projection"
+      document.documentElement.setAttribute("data-theme", nextTheme)
+      projBtn.textContent = nextTheme === "projection" ? "🔆" : "📽️"
+      if (themeBtn) themeBtn.textContent = "🌙"
+      updateSceneTheme(scene, nextTheme)
+      updateChartsTheme(nextTheme)
+    })
+  }
+
   const pdfBtn = document.getElementById("export-pdf")
   if (pdfBtn) {
     pdfBtn.addEventListener("click", () => {
-      pdfBtn.textContent = "⏳ Generating..."
+      pdfBtn.textContent = "⏳ 正在导出..."
       exportPDF().finally(() => {
-        pdfBtn.textContent = "📄 PDF"
+        pdfBtn.textContent = "📄 PDF报告"
       })
     })
   }
 
-  const projBtn = document.getElementById("projection-toggle")
-  if (projBtn) {
-    projBtn.addEventListener("click", () => {
-      const isProjection = document.documentElement.getAttribute("data-theme") === "projection"
-      document.documentElement.setAttribute("data-theme", isProjection ? "" : "projection")
-      projBtn.textContent = isProjection ? "📽️" : "🌙"
-    })
-  }
-
+  // 移除加载遮罩后再启动相机入场动画与数字跳动
   const loading = document.getElementById("loading")
   if (loading) {
     loading.classList.add("hidden")
     setTimeout(() => loading.remove(), 500)
   }
-  
-  setTimeout(animateNumbers, 600)
-  animateCharts()
+
+  startEntranceAnimation()
+  setTimeout(animateNumbers, 200)
 }
 
 main()

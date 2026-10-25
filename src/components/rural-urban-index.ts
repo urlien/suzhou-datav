@@ -3,6 +3,7 @@
 // 指标体系基于导师论文方法论，涵盖7个维度
 
 import * as echarts from 'echarts'
+import { registerChart } from './charts'
 
 interface IndexDimension {
   name: string
@@ -29,6 +30,7 @@ export function initRuralUrbanIndex() {
   if (!el) return
 
   const chart = echarts.init(el)
+  registerChart('rural-urban-index', chart)
 
   // 计算综合指数
   const urbanTotal = dimensions.reduce((sum, d) => sum + d.urban * d.weight, 0)
@@ -45,25 +47,18 @@ export function initRuralUrbanIndex() {
     backgroundColor: 'transparent',
     textStyle: { color: '#e0e6f0', fontSize: 11 },
     tooltip: {
-      trigger: 'axis',
-      formatter: (params: any) => {
-        const dim = dimensions.find(d => d.name === params[0].name)
-        let html = `<strong>${params[0].name}</strong>（权重${(dim?.weight || 0) * 100}%）<br/>`
-        html += `<span style="font-size:11px;color:#6b7a99">${dim?.description}</span><br/>`
-        params.forEach((p: any) => {
-          html += `${p.marker} ${p.seriesName}: ${p.value}分<br/>`
-        })
-        return html
-      },
+      trigger: 'item',
     },
     legend: {
       data: ['城区', '乡村'],
-      textStyle: { color: '#6b7a99' },
+      textStyle: { color: '#8a9ab8', fontSize: 10 },
       top: 0,
     },
     radar: {
+      center: ['50%', '56%'],
+      radius: '60%',
       indicator: dimensions.map(d => ({ name: d.name, max: 100 })),
-      axisName: { color: '#6b7a99', fontSize: 10 },
+      axisName: { color: '#8a9ab8', fontSize: 10 },
       splitLine: { lineStyle: { color: '#1a2744' } },
       splitArea: { areaStyle: { color: ['transparent'] } },
       axisLine: { lineStyle: { color: '#1a2744' } },
