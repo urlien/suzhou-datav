@@ -86,8 +86,8 @@ export function updateChartsTheme(theme: string) {
         if (s.type === 'pie' || s.type === 'graph') {
           return { label: { color: textColor } }
         }
-        if (id === 'timeline') {
-          return { label: { color: subTextColor } }
+        if (id === 'timeline' || id === 'tech' || id === 'medical') {
+          return { label: { color: textColor } }
         }
         return {}
       })
@@ -351,28 +351,108 @@ function initMedicalChart() {
   if (!el) return
   const chart = echarts.init(el)
   registerChart('medical', chart)
+
+  const medicalData = [
+    {
+      name: '基层医疗',
+      value: 4702,
+      unit: '家',
+      desc: '社区服务中心/门诊/卫生室，构筑15分钟健康圈',
+      gradient: ['#636e72', '#2d3436'],
+      pctOfParent: '全市全域覆盖',
+    },
+    {
+      name: '医院总量',
+      value: 288,
+      unit: '所',
+      desc: '全域综合医院、中医院及各类专科医疗机构',
+      gradient: ['#74b9ff', '#0984e3'],
+      pctOfParent: '区域核心力量',
+    },
+    {
+      name: '三级医院',
+      value: 37,
+      unit: '所',
+      desc: '高水平骨干医院（含三甲与三乙），占医院总量 12.8%',
+      gradient: ['#00cec9', '#00b894'],
+      pctOfParent: '占医院 12.8%',
+    },
+    {
+      name: '三甲龙头',
+      value: 17,
+      unit: '所',
+      desc: '顶尖三级甲等综合/专科医院，占三级医院 45.9%',
+      gradient: ['#55efc4', '#00b894'],
+      pctOfParent: '占三级 45.9%',
+    },
+  ]
+
   chart.setOption({
     ...darkTheme,
-    tooltip: { trigger: 'item', formatter: '{b}: {c}家' },
-    legend: {
-      top: 2,
-      left: 'center',
-      itemWidth: 10,
-      itemHeight: 10,
-      textStyle: { color: '#8a9ab8', fontSize: 10 },
+    grid: {
+      top: 14,
+      right: 50,
+      bottom: 22,
+      left: 60,
+      containLabel: false,
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(13, 18, 37, 0.95)',
+      borderColor: '#00d4ff',
+      textStyle: { color: '#e0e6f0', fontSize: 11 },
+      formatter: (params: any) => {
+        const item = medicalData[params.dataIndex]
+        if (!item) return ''
+        return `<strong>${item.name}</strong>: ${item.value} ${item.unit}<br/>` +
+               `<span style="color:#00ff88;font-size:10px">${item.pctOfParent}</span><br/>` +
+               `<span style="color:#8a9ab8;font-size:10px">${item.desc}</span>`
+      },
+    },
+    xAxis: {
+      type: 'log',
+      logBase: 10,
+      min: 1,
+      max: 10000,
+      splitLine: { lineStyle: { color: '#1a2744' } },
+      axisLabel: {
+        color: '#8a9ab8',
+        fontSize: 9,
+        formatter: (v: number) => (v === 1 ? '1' : v >= 1000 ? `${v / 1000}k` : `${v}`),
+      },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+    },
+    yAxis: {
+      type: 'category',
+      data: medicalData.map(d => d.name),
+      axisLabel: { color: '#8a9ab8', fontSize: 10 },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+      axisTick: { show: false },
     },
     series: [{
-      type: 'pie',
-      center: ['50%', '58%'],
-      radius: ['35%', '60%'],
-      data: [
-        { value: 288, name: '医院', itemStyle: { color: '#ff4757' } },
-        { value: 37, name: '三级医院', itemStyle: { color: '#00d4ff' } },
-        { value: 17, name: '三甲医院', itemStyle: { color: '#00ff88' } },
-        { value: 4702, name: '基层医疗', itemStyle: { color: '#6b7a99' } },
-      ],
-      label: { color: '#e0e6f0', fontSize: 10, formatter: '{b}\n{c}' },
-      labelLine: { length: 6, length2: 6 },
+      type: 'bar',
+      data: medicalData.map((d) => ({
+        value: d.value,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+            { offset: 0, color: d.gradient[0] },
+            { offset: 1, color: d.gradient[1] },
+          ]),
+          borderRadius: [0, 4, 4, 0],
+        },
+      })),
+      barWidth: 14,
+      label: {
+        show: true,
+        position: 'right',
+        formatter: (params: any) => {
+          const item = medicalData[params.dataIndex]
+          return `${item.value}${item.unit}`
+        },
+        color: '#e0e6f0',
+        fontSize: 10,
+        offset: [4, 0],
+      },
     }],
   })
 }
@@ -382,37 +462,126 @@ function initTechChart() {
   if (!el) return
   const chart = echarts.init(el)
   registerChart('tech', chart)
+
+  const techMetrics = [
+    {
+      name: '研发人员',
+      actual: '47.0 万人',
+      targetLabel: '参考基准 50 万人',
+      progress: 94.0,
+      badge: '全省第一',
+      color: ['#00d4ff', '#0984e3'],
+    },
+    {
+      name: '发明专利',
+      actual: '18.4 件/万人',
+      targetLabel: '参考基准 20 件/万人',
+      progress: 92.0,
+      badge: '超全国均值',
+      color: ['#00ff88', '#00a35c'],
+    },
+    {
+      name: '专精特新',
+      actual: '848 家',
+      targetLabel: '参考基准 1000 家',
+      progress: 84.8,
+      badge: '国家+省级',
+      color: ['#ff9f43', '#e67e22'],
+    },
+    {
+      name: '高新企业',
+      actual: '1.85 万家',
+      targetLabel: '参考基准 2 万家',
+      progress: 92.5,
+      badge: '全国第四',
+      color: ['#ff6b81', '#ee5253'],
+    },
+  ]
+
   chart.setOption({
     ...darkTheme,
-    grid: baseGrid,
-    tooltip: { trigger: 'axis' },
-    xAxis: {
-      type: 'category',
-      data: ['高新企业', '专精特新', '专利(万件)', '研发人员(万)'],
-      axisLabel: { color: '#8a9ab8', fontSize: 9, interval: 0 },
-      axisLine: { lineStyle: { color: '#1a2744' } },
+    grid: {
+      top: 14,
+      right: 76,
+      bottom: 22,
+      left: 60,
+      containLabel: false,
     },
-    yAxis: {
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(13, 18, 37, 0.95)',
+      borderColor: '#00d4ff',
+      textStyle: { color: '#e0e6f0', fontSize: 11 },
+      formatter: (params: any) => {
+        const item = techMetrics[params.dataIndex]
+        if (!item) return ''
+        return `<strong>${item.name}</strong><br/>` +
+               `当前实绩: <span style="color:#00ff88;font-weight:bold">${item.actual}</span><br/>` +
+               `${item.targetLabel} (达成率 ${item.progress}%)<br/>` +
+               `<span style="color:#ff9f43;font-size:10px">${item.badge}</span>`
+      },
+    },
+    xAxis: {
       type: 'value',
+      min: 0,
+      max: 100,
+      splitLine: { lineStyle: { color: '#1a2744' } },
       axisLabel: {
         color: '#8a9ab8',
         fontSize: 9,
-        formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : `${v}`),
+        formatter: '{value}%',
       },
-      splitLine: { lineStyle: { color: '#1a2744' } },
+      axisLine: { lineStyle: { color: '#1a2744' } },
     },
-    series: [{
-      type: 'bar',
-      data: [18500, 848, 18.4, 47],
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#ff9f43' },
-          { offset: 1, color: '#aa6600' },
-        ]),
-        borderRadius: [3, 3, 0, 0],
+    yAxis: {
+      type: 'category',
+      data: techMetrics.map(d => d.name),
+      axisLabel: { color: '#8a9ab8', fontSize: 10 },
+      axisLine: { lineStyle: { color: '#1a2744' } },
+      axisTick: { show: false },
+    },
+    series: [
+      // 背景槽底条 (100% 槽位)
+      {
+        type: 'bar',
+        barWidth: 12,
+        barGap: '-100%',
+        data: techMetrics.map(() => 100),
+        itemStyle: {
+          color: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: 4,
+        },
+        silent: true,
+        z: 1,
       },
-      barWidth: '55%',
-    }],
+      // 实绩进度条 (0~100% 归一化)
+      {
+        type: 'bar',
+        barWidth: 12,
+        data: techMetrics.map(d => ({
+          value: d.progress,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [
+              { offset: 0, color: d.color[0] },
+              { offset: 1, color: d.color[1] },
+            ]),
+            borderRadius: 4,
+          },
+        })),
+        z: 2,
+        label: {
+          show: true,
+          position: 'right',
+          formatter: (params: any) => {
+            const item = techMetrics[params.dataIndex]
+            return `${item.actual}`
+          },
+          color: '#e0e6f0',
+          fontSize: 10,
+          offset: [6, 0],
+        },
+      },
+    ],
   })
 }
 
