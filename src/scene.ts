@@ -1,13 +1,13 @@
 import * as THREE from "three"
 import { generateSatelliteTexture, applySatelliteTexture } from "./components/satellite-texture"
-import { setTerrainHeightGrid } from "./utils/geo"
+import { setTerrainHeightGrid, BOUNDS } from "./utils/geo"
 
 interface DemData {
   bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number }
   points: [number, number, number][]
 }
 
-type FrameCallback = (time: number) => void
+type FrameCallback = (time: number, deltaTime: number) => void
 const frameCallbacks: FrameCallback[] = []
 
 export function registerFrameCallback(cb: FrameCallback) {
@@ -16,10 +16,10 @@ export function registerFrameCallback(cb: FrameCallback) {
 
 let entranceStart = 0
 let dragMoved = false
-let cameraTarget = new THREE.Vector3(0, 10, 0)
-let desiredTarget = new THREE.Vector3(0, 10, 0)
-let currentDist = 230
-let desiredDist = 230
+let cameraTarget = new THREE.Vector3(0, 8, 0)
+let desiredTarget = new THREE.Vector3(0, 8, 0)
+let currentDist = 210
+let desiredDist = 210
 let rotY = 0.3
 let rotX = 0.55
 
@@ -31,14 +31,14 @@ export function wasCanvasDragged(): boolean {
   return dragMoved
 }
 
-export function flyCameraTo(x: number, z: number, zoomDist = 145) {
-  desiredTarget.set(x, 6, z)
+export function flyCameraTo(x: number, z: number, zoomDist = 135) {
+  desiredTarget.set(x, 5, z)
   desiredDist = zoomDist
 }
 
 export function resetCameraView() {
-  desiredTarget.set(0, 10, 0)
-  desiredDist = 230
+  desiredTarget.set(0, 8, 0)
+  desiredDist = 210
   rotY = 0.3
   rotX = 0.55
 }
@@ -66,65 +66,114 @@ export async function initScene(): Promise<THREE.Scene> {
   renderer.setSize(container.clientWidth, container.clientHeight, false)
 
   // 亮色光照照亮地形，但背景保持暗色
-  const ambientLight = new THREE.AmbientLight(0xffffff, 1.2)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 1.25)
   scene.add(ambientLight)
 
   const dirLight = new THREE.DirectionalLight(0xfff8e7, 1.8)
   dirLight.position.set(100, 200, 100)
   scene.add(dirLight)
 
-  const dirLight2 = new THREE.DirectionalLight(0xddeeff, 0.6)
+  const dirLight2 = new THREE.DirectionalLight(0xddeeff, 0.65)
   dirLight2.position.set(-100, 150, -100)
   scene.add(dirLight2)
 
   const resp = await fetch("/suzhou_dem.json")
   const dem: DemData = await resp.json()
 
-  // Higher resolution for finer terrain detail
-  const gridSize = 500
-  const minLat = dem.bounds.minLat, maxLat = dem.bounds.maxLat
-  const minLon = dem.bounds.minLon, maxLon = dem.bounds.maxLon
+  // 构建与 BOUNDS 严格对齐的高清 DEM 网格（260x260）
+  const gridSize = 260
+  const minLat = BOUNDS.minLat, maxLat = BOUNDS.maxLat
+  const minLon = BOUNDS.minLon, maxLon = BOUNDS.maxLon
 
-  const grid: number[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(0))
+  const rawGrid: number[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(0))
   const count: number[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(0))
 
   for (const [lon, lat, elev] of dem.points) {
+    if (lon < minLon || lon > maxLon || lat < minLat || lat > maxLat) continue
     const x = Math.floor(((lon - minLon) / (maxLon - minLon)) * (gridSize - 1))
     const y = (gridSize - 1) - Math.floor(((lat - minLat) / (maxLat - minLat)) * (gridSize - 1))
     if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
-      grid[y][x] += elev
+      rawGrid[y][x] += elev
       count[y][x]++
     }
   }
 
-  let maxElev = 0
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
       if (count[y][x] > 0) {
-        grid[y][x] /= count[y][x]
-        maxElev = Math.max(maxElev, grid[y][x])
+        rawGrid[y][x] /= count[y][x]
       }
     }
   }
 
-  // 缓存地形高程网格供建筑、边界、热力图采样
-  setTerrainHeightGrid(grid, maxElev)
+  // 迭代邻域补洞（Inpainting），修复 DEM 原始点稀疏导致的空洞与凹坑噪点
+  for (let pass = 0; pass < 10; pass++) {
+    let filled = 0
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        if (count[y][x] > 0) continue
+        let sum = 0, n = 0
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const ny = y + dy, nx = x + dx
+            if (ny >= 0 && ny < gridSize && nx >= 0 && nx < gridSize && count[ny][nx] > 0) {
+              sum += rawGrid[ny][nx]
+              n++
+            }
+          }
+        }
+        if (n > 0) {
+          rawGrid[y][x] = sum / n
+          count[y][x] = 1
+          filled++
+        }
+      }
+    }
+    if (filled === 0) break
+  }
+
+  // 3x3 高斯平滑卷积核，消除台阶伪影
+  const grid: number[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(0))
+  const kernel = [
+    [1, 2, 1],
+    [2, 4, 2],
+    [1, 2, 1],
+  ]
+  let maxElev = 0
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
+      let sum = 0, weight = 0
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const ny = y + dy, nx = x + dx
+          if (ny >= 0 && ny < gridSize && nx >= 0 && nx < gridSize) {
+            const w = kernel[dy + 1][dx + 1]
+            sum += rawGrid[ny][nx] * w
+            weight += w
+          }
+        }
+      }
+      grid[y][x] = sum / (weight || 1)
+      if (grid[y][x] > maxElev) maxElev = grid[y][x]
+    }
+  }
+
+  // 缓存地形高程网格供建筑、边界、热力图双线性采样
+  setTerrainHeightGrid(grid, maxElev || 1)
 
   const geometry = new THREE.PlaneGeometry(200, 200, gridSize - 1, gridSize - 1)
   const positions = geometry.attributes.position
   const colors = new Float32Array(positions.count * 3)
 
-  // Multi-layer color scheme for terrain elevation
   for (let i = 0; i < positions.count; i++) {
     const x = i % gridSize
     const y = Math.floor(i / gridSize)
-    const elev = (grid[y][x] / maxElev) * 6 // 平原地形，压低高度
+    const elev = (grid[y][x] / (maxElev || 1)) * 6 // 平原地形，适度保留低丘起伏
     positions.setZ(i, elev)
 
     const t = elev / 6
     let r: number, g: number, b: number
 
-    // 苏州是平原，地形起伏很小，用平缓渐变
     if (t < 0.2) {
       r = 0.22; g = 0.42; b = 0.32
     } else if (t < 0.4) {
@@ -163,8 +212,8 @@ export async function initScene(): Promise<THREE.Scene> {
   terrain.rotation.x = -Math.PI / 2
   scene.add(terrain)
 
-  // 异步非阻塞加载天地图卫星纹理（不阻塞首屏与入场动画）
-  generateSatelliteTexture(dem.bounds)
+  // 异步非阻塞加载天地图卫星纹理（对齐紧凑市域外包框）
+  generateSatelliteTexture(BOUNDS)
     .then(satelliteTexture => {
       if (satelliteTexture) {
         applySatelliteTexture(terrain, satelliteTexture)
@@ -177,7 +226,7 @@ export async function initScene(): Promise<THREE.Scene> {
   gridHelper.name = "grid-helper"
   scene.add(gridHelper)
 
-  camera.position.set(80, 120, 150)
+  camera.position.set(70, 110, 140)
   camera.lookAt(cameraTarget)
   scene.add(camera)
 
@@ -185,7 +234,7 @@ export async function initScene(): Promise<THREE.Scene> {
   let downX = 0, downY = 0
   let prevX = 0, prevY = 0
   const entranceDuration = 1800
-  const startDist = 650
+  const startDist = 580
 
   canvas.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return
@@ -220,7 +269,7 @@ export async function initScene(): Promise<THREE.Scene> {
     (e) => {
       e.preventDefault()
       desiredDist += e.deltaY * 0.25
-      desiredDist = Math.max(45, Math.min(800, desiredDist))
+      desiredDist = Math.max(45, Math.min(750, desiredDist))
     },
     { passive: false }
   )
@@ -243,21 +292,25 @@ export async function initScene(): Promise<THREE.Scene> {
   })
 
   entranceStart = performance.now()
+  let lastTime = performance.now()
 
   function animate() {
     requestAnimationFrame(animate)
 
     const now = performance.now()
     const timeSec = now * 0.001
+    const deltaSec = Math.min((now - lastTime) * 0.001, 0.1)
+    lastTime = now
 
-    // 统一驱动飞线、热力图等子模块的帧动画
+    // 统一驱动飞线、热力图等子模块的帧动画（传入 timeSec 与 deltaSec 实现帧率无关动画）
     for (let i = 0; i < frameCallbacks.length; i++) {
-      frameCallbacks[i](timeSec)
+      frameCallbacks[i](timeSec, deltaSec)
     }
 
-    // 平滑插值相机焦点与距离
-    cameraTarget.lerp(desiredTarget, 0.08)
-    currentDist += (desiredDist - currentDist) * 0.08
+    // 基于 deltaSec 的平滑指数阻尼衰减，无论 60Hz 还是 144Hz 都能呈现完全一致的手感
+    const dampFactor = 1 - Math.exp(-6.5 * deltaSec)
+    cameraTarget.lerp(desiredTarget, dampFactor)
+    currentDist += (desiredDist - currentDist) * dampFactor
 
     const elapsed = now - entranceStart
     let activeDist = currentDist
@@ -268,7 +321,7 @@ export async function initScene(): Promise<THREE.Scene> {
     }
 
     camera.position.x = cameraTarget.x + activeDist * Math.sin(rotY) * Math.cos(rotX)
-    camera.position.y = cameraTarget.y + activeDist * Math.sin(rotX) + 35
+    camera.position.y = cameraTarget.y + activeDist * Math.sin(rotX) + 32
     camera.position.z = cameraTarget.z + activeDist * Math.cos(rotY) * Math.cos(rotX)
     camera.lookAt(cameraTarget)
 

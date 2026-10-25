@@ -1,4 +1,5 @@
 import * as THREE from "three"
+import { BOUNDS } from "../utils/geo"
 
 const TIANDITU_KEY = "fd24393715ec5f392e2356018732ab9d"
 const TILE_SIZE = 256
@@ -22,19 +23,22 @@ function loadTile(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * 卫星纹理生成（高效方案）：
- * 1. 使用 zoom=10（约110个瓦片，原始分辨率 >2560px，足以覆盖 1024x1024 贴图）并通过 t0~t7 多子域并发加载
+ * 卫星纹理生成（紧凑市域高清方案）：
+ * 1. 使用与 BOUNDS 严格对齐的苏州市域裁剪框，zoom=11（约121个瓦片，多子域并发加载，清晰度提升4x）
  * 2. 将所有瓦片绘制到 Mercator canvas 并按纬度重采样至地形 UV
  */
 export async function generateSatelliteTexture(
-  _bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number }
+  _bounds?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 ): Promise<THREE.Texture | null> {
-  const minLon = 119, maxLon = 122, minLat = 30, maxLat = 33
-  const zoom = 10
+  const minLon = BOUNDS.minLon
+  const maxLon = BOUNDS.maxLon
+  const minLat = BOUNDS.minLat
+  const maxLat = BOUNDS.maxLat
+  const zoom = 11
 
   // Mercator 像素范围
-  const mercTL = lonLatToMercatorPixel(minLon, maxLat, zoom) // lon=119, lat=33
-  const mercBR = lonLatToMercatorPixel(maxLon, minLat, zoom) // lon=122, lat=30
+  const mercTL = lonLatToMercatorPixel(minLon, maxLat, zoom)
+  const mercBR = lonLatToMercatorPixel(maxLon, minLat, zoom)
 
   const startTileX = Math.floor(mercTL.x / TILE_SIZE)
   const startTileY = Math.floor(mercTL.y / TILE_SIZE)

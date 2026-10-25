@@ -1,10 +1,12 @@
 // 公共地理坐标转换与地形高程采样工具模块
 
+// 紧贴苏州市域外包框，并按中心纬度 cos(31.40°) = 0.85355 设定 Δlon : Δlat = 1.74° : 1.48°
+// 确保映射到 200×200 场景平面后东西向与南北向物理比例严格 1:1，无拉伸变形
 export const BOUNDS = {
-  minLat: 30,
-  maxLat: 33,
-  minLon: 119,
-  maxLon: 122,
+  minLat: 30.66,
+  maxLat: 32.14,
+  minLon: 119.78,
+  maxLon: 121.52,
 } as const
 
 // 区县名称标准化映射（兼容简称、别名与全称）
@@ -99,14 +101,31 @@ export function setTerrainHeightGrid(grid: number[][], maxElev: number) {
 }
 
 /**
- * 查询场景坐标 (x, z) 对应的地形表面 Y 高度
+ * 查询场景坐标 (x, z) 对应的地形表面 Y 高度（双线性插值 Bilinear Interpolation）
  */
 export function getTerrainHeightAtXZ(x: number, z: number): number {
-  if (!cachedGrid || cachedGridSize === 0) return 0.15
-  const gx = Math.floor(((x + 100) / 200) * (cachedGridSize - 1))
-  const gy = Math.floor(((z + 100) / 200) * (cachedGridSize - 1))
-  if (gx < 0 || gx >= cachedGridSize || gy < 0 || gy >= cachedGridSize) return 0.15
-  return (cachedGrid[gy][gx] / cachedMaxElev) * 6
+  if (!cachedGrid || cachedGridSize < 2) return 0.15
+  const u = ((x + 100) / 200) * (cachedGridSize - 1)
+  const v = ((z + 100) / 200) * (cachedGridSize - 1)
+
+  const x0 = Math.max(0, Math.min(cachedGridSize - 2, Math.floor(u)))
+  const y0 = Math.max(0, Math.min(cachedGridSize - 2, Math.floor(v)))
+  const x1 = x0 + 1
+  const y1 = y0 + 1
+
+  const tx = Math.max(0, Math.min(1, u - x0))
+  const ty = Math.max(0, Math.min(1, v - y0))
+
+  const h00 = cachedGrid[y0][x0]
+  const h10 = cachedGrid[y0][x1]
+  const h01 = cachedGrid[y1][x0]
+  const h11 = cachedGrid[y1][x1]
+
+  const h0 = h00 * (1 - tx) + h10 * tx
+  const h1 = h01 * (1 - tx) + h11 * tx
+  const elev = h0 * (1 - ty) + h1 * ty
+
+  return (elev / cachedMaxElev) * 6
 }
 
 export function getTerrainHeightAtGeo(lat: number, lon: number): number {
