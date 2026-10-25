@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "earcut": "^3.2.3",
     "echarts": "^5.6.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
