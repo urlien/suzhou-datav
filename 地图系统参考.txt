@@ -1,0 +1,26 @@
+地图系统参考（整合版）
+==================================================
+
+1. civ-atlas
+简述：程序化生成虚拟星球地理与文明历史推演的引擎。核心思想是底层网格与空间数据不变，渲染与投影可以随意切换。
+地址：https://github.com/guaner-334/civ-atlas
+
+2. china-antique-maplibre
+简述：一套将现代卫星地图“做旧”成古卷羊皮纸风格的样式方案。依赖 CSS 滤镜栈、地形山影和城池分级 3D 模型。
+地址：https://github.com/hopechen067/china-antique-maplibre
+
+3. MapStage
+简述：地图视觉调参工作台。支持浏览器内实时调色、切投影，一键导出 JSON 配置。自带 Agent Skill，可让 AI 根据 JSON 直接写渲染代码。
+地址：https://github.com/hopechen067/MapStage
+
+4. worldbuilding-mapgen
+简述：一套用 Python 和 Agent Skill 构建的架空世界地理生成器。从球面先验或大陆核出发，程序化生成地形、气候、河流、湖泊与洋流，最终输出矢量地图、3D 立体地形、全息等高线等成果。
+地址：https://github.com/SjackQ3plus7/worldbuilding-mapgen
+
+5. CK3 Unity 复刻项目
+简述：B站 UP 主开源的完整 Unity URP 工程，源码级复刻了《十字军之王3》的地图系统。包含 33x33 LOD 网格生成、省份颜色距离场（边缘柔化）、高度图索引映射、多层材质混合，以及严苛的 Agent 开发证据规范。核心 C# 代码与地图数据已整合进主仓库。
+地址：本地路径 D:\CK3；已备份至 https://github.com/urlien/suzhou-datav/tree/main/ck3地图系统参考
+
+6. suzhou-datav（主项目）
+简述：苏州市数据可视化大屏。目前底层 GIS 空间算法（KDE、等时圈）很强，下一步计划借鉴上述所有项目，将视觉层抽离，实现随时“换肤”与图观分离。
+地址：https://github.com/urlien/suzhou-datav
