@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { geoTo3D, getTerrainHeightAtXZ } from '../utils/geo'
+import { resolveTerrainMode } from '../utils/terrain-mode'
 
 interface BuildingData {
   coords: [number, number][]
@@ -145,6 +146,7 @@ export async function addBuildings(scene: THREE.Scene) {
 
     const mesh = new THREE.Mesh(mergedGeometry, material)
     mesh.name = 'buildings'
+    mesh.visible = resolveTerrainMode() !== 'registration'
     scene.add(mesh)
 
     console.log(`[Buildings] 渲染了 ${renderedCount} 栋苏州市域建筑白膜`)

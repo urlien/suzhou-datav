@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { areaData, districtDetails, gdpData, getDistrictDetail, populationData, type DistrictDetailInfo } from '../data/official-stats'
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, normalizeDistrictName } from '../utils/geo'
 import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
-import { highlightDistrictBoundary } from './boundary'
+import { districtAtXZ, highlightDistrictBoundary } from './boundary'
 
 const districtCenters: Record<string, { x: number; z: number; lat: number; lon: number }> = {}
 for (const name of CANONICAL_DISTRICTS) {
@@ -82,34 +82,15 @@ export function setupEnhancedInteraction(
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
     raycaster.setFromCamera(mouse, camera)
 
-    const boundaryGroup = scene.getObjectByName('boundary-group')
-    if (boundaryGroup && boundaryGroup.visible) {
-      const hits = raycaster.intersectObjects(boundaryGroup.children, false)
-      for (const hit of hits) {
-        const dName = hit.object.userData?.districtName
-        if (dName && hit.object.visible) return normalizeDistrictName(dName)
-      }
-    }
-
-    // 回退：与 y=0 平面相交后找最近区县中心
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
-    const target = new THREE.Vector3()
-    if (!raycaster.ray.intersectPlane(plane, target)) return null
-
-    let nearest: string | null = null
-    let minDist = Infinity
-    for (const [name, center] of Object.entries(districtCenters)) {
-      const dist = Math.hypot(target.x - center.x, target.z - center.z)
-      if (dist < minDist) {
-        minDist = dist
-        nearest = name
-      }
-    }
-    return nearest && minDist < 16 ? nearest : null
+    const terrain = scene.getObjectByName('terrain')
+    if (!terrain || !terrain.visible || !scene.getObjectByName('boundary-group')?.visible) return null
+    const hit = raycaster.intersectObject(terrain, false)[0]
+    return hit ? districtAtXZ(hit.point.x, hit.point.z) : null
   }
 
   // 悬浮提示 + 3D 边界高亮
   canvas.addEventListener('mousemove', (event) => {
+    if (modal.style.display !== 'none') return
     const pickedName = pickDistrict(event)
     if (pickedName) {
       const detail = districtDetails[pickedName]
@@ -135,6 +116,11 @@ export function setupEnhancedInteraction(
     if (modal.style.display === 'none') {
       highlightDistrictBoundary(scene, null)
     }
+  })
+
+  canvas.addEventListener('mouseleave', () => {
+    infoEl.classList.remove('visible')
+    if (modal.style.display === 'none') highlightDistrictBoundary(scene, null)
   })
 
   // 点击弹窗（过滤掉拖拽旋转操作）

@@ -86,6 +86,7 @@
         <div id="toolbar">
           <span class="toolbar-label">图层：</span>
           <button class="tool-btn active" data-layer="terrain">地形</button>
+          <button class="tool-btn active" data-layer="landcover" title="OpenStreetMap 已标注的水面与林地">水系林地</button>
           <button class="tool-btn active" data-layer="boundary">边界</button>
           <button class="tool-btn active" data-layer="heatmap">热力</button>
           <button class="tool-btn active" data-layer="buildings">白膜</button>
@@ -197,7 +198,8 @@
     </div>
 
     <div id="footer">
-      <span>数据来源：苏州市统计局 · 苏州市自然资源和规划局 · ASTER GDEM V3</span>
+      <span>数据来源：苏州市统计局 · ASTER GDEM V3 · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span>
+      <span id="terrain-mode-status"></span>
       <span>苏州科技大学 城乡规划</span>
     </div>
   </div>

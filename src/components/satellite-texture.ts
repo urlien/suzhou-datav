@@ -76,8 +76,8 @@ export async function generateSatelliteTexture(
 
   await Promise.all(tilePromises)
   console.log(`[Satellite] 加载了 ${loaded} 个瓦片 (zoom=${zoom})`)
-  if (loaded === 0) {
-    console.warn("[Satellite] 瓦片未加载成功，保留高程设色地形")
+  if (loaded !== tilePromises.length) {
+    console.warn(`[Satellite] 瓦片不完整 (${loaded}/${tilePromises.length})，保留本地地形纹理`)
     return null
   }
 
@@ -117,13 +117,75 @@ export async function generateSatelliteTexture(
   return texture
 }
 
+/** Diagnostic only: request an EPSG:4326 image for the exact terrain bounds. */
+export async function generateRegistrationReferenceTexture(grid: number[][]): Promise<THREE.Texture> {
+  const bbox = [BOUNDS.minLon, BOUNDS.minLat, BOUNDS.maxLon, BOUNDS.maxLat].join(",")
+  const url = new URL("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export")
+  url.searchParams.set("bbox", bbox)
+  url.searchParams.set("bboxSR", "4326")
+  url.searchParams.set("imageSR", "4326")
+  // 1.74° : 1.48° = 87 : 74. Matching this ratio prevents ArcGIS
+  // from expanding the requested bounding box to fit a square image.
+  url.searchParams.set("size", "1740,1480")
+  url.searchParams.set("format", "jpg")
+  url.searchParams.set("f", "image")
+
+  const source = await new THREE.TextureLoader().loadAsync(url.toString())
+  const image = source.image as HTMLImageElement
+  const canvas = document.createElement("canvas")
+  canvas.width = 1740
+  canvas.height = 1740
+  const context = canvas.getContext("2d", { willReadFrequently: true })!
+  context.drawImage(image, 0, 0, canvas.width, canvas.height)
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+  const data = pixels.data
+  const last = grid.length - 1
+
+  const sample = (x: number, y: number): number => {
+    const gx = Math.max(0, Math.min(last, x))
+    const gy = Math.max(0, Math.min(last, y))
+    const x0 = Math.floor(gx), y0 = Math.floor(gy)
+    const x1 = Math.min(last, x0 + 1), y1 = Math.min(last, y0 + 1)
+    const tx = gx - x0, ty = gy - y0
+    const top = grid[y0][x0] * (1 - tx) + grid[y0][x1] * tx
+    const bottom = grid[y1][x0] * (1 - tx) + grid[y1][x1] * tx
+    return top * (1 - ty) + bottom * ty
+  }
+
+  for (let y = 0; y < canvas.height; y++) {
+    const gy = y / (canvas.height - 1) * last
+    for (let x = 0; x < canvas.width; x++) {
+      const gx = x / (canvas.width - 1) * last
+      const left = sample(gx - 1.5, gy)
+      const right = sample(gx + 1.5, gy)
+      const above = sample(gx, gy - 1.5)
+      const below = sample(gx, gy + 1.5)
+      const shade = Math.max(0.7, Math.min(1.18, 0.98 + (left - right) * 0.004 + (above - below) * 0.006))
+      const offset = (y * canvas.width + x) * 4
+      for (let channel = 0; channel < 3; channel++) {
+        data[offset + channel] = Math.max(0, Math.min(255, data[offset + channel] * shade))
+      }
+    }
+  }
+  context.putImageData(pixels, 0, 0)
+  source.dispose()
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
+  texture.wrapS = THREE.ClampToEdgeWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
+  return texture
+}
+
 export function applySatelliteTexture(terrainMesh: THREE.Mesh, texture: THREE.Texture) {
-  const material = terrainMesh.material as THREE.MeshPhongMaterial
+  const material = terrainMesh.material as THREE.MeshBasicMaterial | THREE.MeshPhongMaterial
   if (material) {
     material.map = texture
     material.vertexColors = false
     material.needsUpdate = true
-    material.emissive = new THREE.Color(0x080808)
-    material.emissiveIntensity = 0.3
+    if (material instanceof THREE.MeshPhongMaterial) {
+      material.emissive = new THREE.Color(0x080808)
+      material.emissiveIntensity = 0.3
+    }
   }
 }

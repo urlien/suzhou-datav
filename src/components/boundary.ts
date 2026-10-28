@@ -1,8 +1,30 @@
 import * as THREE from 'three'
-import { getTerrainHeightAtXZ, lonLatTo3D, normalizeDistrictName } from '../utils/geo'
+import { BOUNDS, getTerrainHeightAtXZ, lonLatTo3D, normalizeDistrictName } from '../utils/geo'
+import { resolveTerrainMode } from '../utils/terrain-mode'
 import { filterState } from './filter'
 
 let boundaryVisible = true
+let districtPolygons: Array<{ name: string; polygons: number[][][][] }> = []
+
+function inRing(x: number, y: number, ring: number[][]): boolean {
+  let inside = false
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j]
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside
+  }
+  return inside
+}
+
+export function districtAtXZ(x: number, z: number): string | null {
+  const lon = BOUNDS.minLon + (x + 100) / 200 * (BOUNDS.maxLon - BOUNDS.minLon)
+  const lat = BOUNDS.minLat + (100 - z) / 200 * (BOUNDS.maxLat - BOUNDS.minLat)
+  for (const { name, polygons } of districtPolygons) {
+    for (const rings of polygons) {
+      if (rings.length && inRing(lon, lat, rings[0]) && !rings.slice(1).some(ring => inRing(lon, lat, ring))) return name
+    }
+  }
+  return null
+}
 
 const districtColors: Record<string, number> = {
   '虎丘区': 0x4ecdc4,
@@ -78,6 +100,36 @@ function createFillMesh(
   mesh.position.y = yOffset
   mesh.userData = { districtName: name, type: 'boundary-fill', baseOpacity: 0.35, baseColor: color }
   mesh.name = `boundary-fill-${name}`
+  return mesh
+}
+
+function createTerrainFill(scene: THREE.Scene, polygons: number[][][][], color: number, name: string): THREE.Mesh | null {
+  const terrain = scene.getObjectByName('terrain') as THREE.Mesh | undefined
+  if (!terrain) return null
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 1024
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = '#' + color.toString(16).padStart(6, '0')
+  for (const polygon of polygons) {
+    ctx.beginPath()
+    for (const ring of polygon) {
+      ring.forEach(([lon, lat], i) => {
+        const x = (lon - BOUNDS.minLon) / (BOUNDS.maxLon - BOUNDS.minLon) * canvas.width
+        const y = (BOUNDS.maxLat - lat) / (BOUNDS.maxLat - BOUNDS.minLat) * canvas.height
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y)
+      })
+      ctx.closePath()
+    }
+    ctx.fill('evenodd')
+  }
+  const geo = terrain.geometry.clone()
+  const pos = geo.getAttribute('position') as THREE.BufferAttribute
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, pos.getZ(i) + 0.12)
+  const mat = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide })
+  const mesh = new THREE.Mesh(geo, mat)
+  mesh.rotation.x = -Math.PI / 2
+  mesh.renderOrder = 2
+  mesh.userData = { districtName: name, type: 'boundary-fill', baseOpacity: 0.16, baseColor: color }
   return mesh
 }
 
@@ -206,28 +258,33 @@ function createDistrictLabelWithLeader(
   const ctx = canvas.getContext('2d')!
 
   const hexColor = '#' + color.toString(16).padStart(6, '0')
+  const atlasLabels = resolveTerrainMode() === 'registration'
 
-  // 圆角半透明深色科技标牌
-  ctx.fillStyle = 'rgba(13, 18, 37, 0.88)'
-  ctx.strokeStyle = hexColor
-  ctx.lineWidth = 3
-  ctx.beginPath()
-  ctx.roundRect(8, 8, 240, 56, 14)
-  ctx.fill()
-  ctx.stroke()
+  if (!atlasLabels) {
+    ctx.fillStyle = 'rgba(13, 18, 37, 0.88)'
+    ctx.strokeStyle = hexColor
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.roundRect(8, 8, 240, 56, 14)
+    ctx.fill()
+    ctx.stroke()
+    ctx.fillStyle = hexColor
+    ctx.beginPath()
+    ctx.arc(32, 36, 7, 0, Math.PI * 2)
+    ctx.fill()
+  }
 
-  // 标牌左侧光点
-  ctx.fillStyle = hexColor
-  ctx.beginPath()
-  ctx.arc(32, 36, 7, 0, Math.PI * 2)
-  ctx.fill()
-
-  // 文字渲染
-  ctx.font = 'bold 28px "Microsoft YaHei", "PingFang SC", sans-serif'
-  ctx.fillStyle = '#f0f6ff'
+  ctx.font = atlasLabels ? 'bold 32px "Microsoft YaHei", sans-serif' : 'bold 28px "Microsoft YaHei", "PingFang SC", sans-serif'
+  ctx.fillStyle = atlasLabels ? '#fff3d2' : '#f0f6ff'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(displayName, 138, 37)
+  if (atlasLabels) {
+    ctx.strokeStyle = 'rgba(20, 20, 17, 0.95)'
+    ctx.lineWidth = 6
+    ctx.lineJoin = 'round'
+    ctx.strokeText(displayName, 128, 37)
+  }
+  ctx.fillText(displayName, atlasLabels ? 128 : 138, 37)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true
@@ -289,6 +346,11 @@ export async function addBoundary(scene: THREE.Scene) {
     const resp = await fetch('/suzhou_districts.geojson')
     const geojson = await resp.json()
     const features = geojson.features || []
+    districtPolygons = features.map((feature: { properties: { name: string }, geometry: { type: string, coordinates: number[][][][] } }) => ({
+      name: feature.properties.name,
+      polygons: feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates : [feature.geometry.coordinates as unknown as number[][][]],
+    }))
+    const showFlatFills = resolveTerrainMode() !== 'registration'
 
     for (const feature of features) {
       const name = feature.properties?.name
@@ -301,9 +363,14 @@ export async function addBoundary(scene: THREE.Scene) {
           ? geometry.coordinates
           : [geometry.coordinates]
 
+      if (!showFlatFills) {
+        const fill = createTerrainFill(scene, coordsList, color, name)
+        if (fill) group.add(fill)
+      }
+
       for (const polygon of coordsList) {
         const outerRing = polygon[0]
-        group.add(createFillMesh(outerRing, color, name, 0.52))
+        if (showFlatFills) group.add(createFillMesh(outerRing, color, name, 0.52))
         group.add(createBoundaryLine(outerRing, color, name))
         group.add(createGlowWall(outerRing, color, name, 1.8))
       }
@@ -317,7 +384,7 @@ export async function addBoundary(scene: THREE.Scene) {
 
     // 补充第10个板块：苏州工业园区边界、发光墙与悬浮牵引地名标签
     const sipColor = districtColors['苏州工业园区']
-    group.add(createFillMesh(SIP_RING, sipColor, '苏州工业园区', 0.65))
+    if (showFlatFills) group.add(createFillMesh(SIP_RING, sipColor, '苏州工业园区', 0.65))
     group.add(createBoundaryLine(SIP_RING, sipColor, '苏州工业园区'))
     group.add(createGlowWall(SIP_RING, sipColor, '苏州工业园区', 1.8))
     group.add(createCenterMarker([120.72, 31.32], sipColor, '苏州工业园区'))
@@ -340,7 +407,7 @@ export async function addBoundary(scene: THREE.Scene) {
           obj.visible = isSelected
         } else if (obj instanceof THREE.Mesh && obj.userData.type === 'boundary-fill') {
           const mat = obj.material as THREE.MeshBasicMaterial
-          obj.userData.baseOpacity = isSelected ? 0.35 : 0.06
+          obj.userData.baseOpacity = isSelected ? (showFlatFills ? 0.35 : 0.16) : 0.04
           mat.opacity = obj.userData.baseOpacity
         } else if (obj instanceof THREE.Line && obj.userData.type === 'boundary-line') {
           const mat = obj.material as THREE.LineBasicMaterial
@@ -401,13 +468,14 @@ export function highlightDistrictBoundary(scene: THREE.Scene, targetName: string
     if (obj instanceof THREE.Mesh && obj.userData?.type === 'boundary-fill') {
       const mat = obj.material as THREE.MeshBasicMaterial
       const isMatch = normalized && obj.userData.districtName === normalized
-      mat.opacity = isMatch ? 0.75 : (normalized ? 0.12 : obj.userData.baseOpacity)
+      mat.opacity = isMatch ? (resolveTerrainMode() === 'registration' ? 0.48 : 0.75) : (normalized ? 0.12 : obj.userData.baseOpacity)
     } else if (obj.userData?.type === 'boundary-label-group') {
       const isMatch = normalized && obj.userData.districtName === normalized
       const sprite = obj.children.find(c => c instanceof THREE.Sprite) as THREE.Sprite | undefined
       if (sprite) {
         const sx = sprite.userData.baseScaleX || 11.5
         const sy = sprite.userData.baseScaleY || 3.2
+        sprite.userData.highlightScale = isMatch ? 1.25 : 1
         sprite.scale.set(isMatch ? sx * 1.25 : sx, isMatch ? sy * 1.25 : sy, 1)
       }
     }

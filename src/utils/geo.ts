@@ -93,11 +93,13 @@ export function lonLatTo3D(lon: number, lat: number): { x: number; z: number } {
 let cachedGrid: number[][] | null = null
 let cachedGridSize = 0
 let cachedMaxElev = 1
+let cachedVerticalScale = 6
 
-export function setTerrainHeightGrid(grid: number[][], maxElev: number) {
+export function setTerrainHeightGrid(grid: number[][], maxElev: number, verticalScale = 6) {
   cachedGrid = grid
   cachedGridSize = grid.length
   cachedMaxElev = maxElev || 1
+  cachedVerticalScale = verticalScale
 }
 
 /**
@@ -125,7 +127,7 @@ export function getTerrainHeightAtXZ(x: number, z: number): number {
   const h1 = h01 * (1 - tx) + h11 * tx
   const elev = h0 * (1 - ty) + h1 * ty
 
-  return (elev / cachedMaxElev) * 6
+  return (elev / cachedMaxElev) * cachedVerticalScale
 }
 
 export function getTerrainHeightAtGeo(lat: number, lon: number): number {

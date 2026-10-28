@@ -19,6 +19,8 @@ import { fetchWeather, fetchAirQuality, renderWeatherPanel } from "./components/
 import { initDataAnnotations } from "./components/data-annotation"
 import { initRuralUrbanIndex } from "./components/rural-urban-index"
 import { exportPDF } from "./components/pdf-export"
+import { resolveTerrainMode } from "./utils/terrain-mode"
+import { addLandcover } from "./components/landcover"
 import "./style.css"
 import "./print.css"
 
@@ -30,7 +32,8 @@ async function main() {
   // 并行加载行政边界与3D建筑数据，缩短首屏等待时间
   await Promise.all([
     addBoundary(scene),
-    addBuildings(scene)
+    addBuildings(scene),
+    addLandcover(scene).catch(err => console.warn('[Landcover] 加载失败:', err))
   ])
 
   initCharts()
@@ -62,6 +65,7 @@ async function main() {
   // 底部工具栏 - 4个图层切换（地形、行政边界、人口热力、3D建筑）
   const toolbar = document.getElementById("toolbar")
   if (toolbar) {
+    if (resolveTerrainMode() === "registration") toolbar.querySelector('[data-layer="buildings"]')?.classList.remove("active")
     toolbar.querySelectorAll("button[data-layer]").forEach(btn => {
       btn.addEventListener("click", () => {
         const layer = btn.getAttribute("data-layer")
@@ -69,8 +73,10 @@ async function main() {
           const isActive = btn.classList.toggle("active")
           const terrain = scene.getObjectByName("terrain")
           const grid = scene.getObjectByName("grid-helper")
+          const landcover = scene.getObjectByName("landcover")
           if (terrain) terrain.visible = isActive
           if (grid) grid.visible = isActive
+          if (landcover) landcover.visible = isActive && !!toolbar.querySelector('[data-layer="landcover"]')?.classList.contains('active')
         } else if (layer === "boundary") {
           const visible = toggleBoundary(scene)
           btn.classList.toggle("active", visible)
@@ -80,6 +86,12 @@ async function main() {
         } else if (layer === "buildings") {
           const visible = toggleBuildings(scene)
           btn.classList.toggle("active", visible)
+        } else if (layer === "landcover") {
+          const landcover = scene.getObjectByName('landcover')
+          if (landcover) {
+            const enabled = btn.classList.toggle('active')
+            landcover.visible = enabled && scene.getObjectByName('terrain')?.visible !== false
+          }
         }
       })
     })

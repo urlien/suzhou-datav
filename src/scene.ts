@@ -1,6 +1,9 @@
 import * as THREE from "three"
-import { generateSatelliteTexture, applySatelliteTexture } from "./components/satellite-texture"
+import { generateSatelliteTexture, generateRegistrationReferenceTexture, applySatelliteTexture } from "./components/satellite-texture"
+import { createTerrainAtlasTexture } from "./components/terrain-atlas"
 import { setTerrainHeightGrid, BOUNDS } from "./utils/geo"
+import { resolveTerrainMode } from "./utils/terrain-mode"
+import { createNearImagery } from "./components/near-imagery"
 
 interface DemData {
   bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number }
@@ -79,6 +82,10 @@ export async function initScene(): Promise<THREE.Scene> {
 
   const resp = await fetch("/suzhou_dem.json")
   const dem: DemData = await resp.json()
+  const terrainMode = resolveTerrainMode()
+  // The diagnostic imagery view exaggerates height only; horizontal positions
+  // retain their existing geographic alignment.
+  const verticalScale = terrainMode === "registration" ? 11 : 6
 
   // 构建与 BOUNDS 严格对齐的高清 DEM 网格（260x260）
   const gridSize = 260
@@ -159,7 +166,7 @@ export async function initScene(): Promise<THREE.Scene> {
   }
 
   // 缓存地形高程网格供建筑、边界、热力图双线性采样
-  setTerrainHeightGrid(grid, maxElev || 1)
+  setTerrainHeightGrid(grid, maxElev || 1, verticalScale)
 
   const geometry = new THREE.PlaneGeometry(200, 200, gridSize - 1, gridSize - 1)
   const positions = geometry.attributes.position
@@ -168,10 +175,10 @@ export async function initScene(): Promise<THREE.Scene> {
   for (let i = 0; i < positions.count; i++) {
     const x = i % gridSize
     const y = Math.floor(i / gridSize)
-    const elev = (grid[y][x] / (maxElev || 1)) * 6 // 平原地形，适度保留低丘起伏
+    const elev = (grid[y][x] / (maxElev || 1)) * verticalScale // 平原地形，适度保留低丘起伏
     positions.setZ(i, elev)
 
-    const t = elev / 6
+    const t = elev / verticalScale
     let r: number, g: number, b: number
 
     if (t < 0.2) {
@@ -199,27 +206,67 @@ export async function initScene(): Promise<THREE.Scene> {
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
   geometry.computeVertexNormals()
 
-  const terrain = new THREE.Mesh(
-    geometry,
-    new THREE.MeshPhongMaterial({
-      vertexColors: true,
-      side: THREE.DoubleSide,
-      shininess: 25,
-      specular: new THREE.Color(0x222222),
-    })
-  )
+  // Keep the earlier view available for visual comparison. The atlas is the
+  // default because the remote satellite tiles may fail or load only partly.
+  const atlasMode = terrainMode !== "legacy"
+  const imageryMode = terrainMode === "satellite" || terrainMode === "registration"
+  const atlasTexture = atlasMode
+    ? await createTerrainAtlasTexture(grid, terrainMode === "island")
+    : null
+  const terrainMaterial = atlasMode
+    ? imageryMode
+      ? new THREE.MeshPhongMaterial({
+          map: atlasTexture,
+          side: THREE.DoubleSide,
+          color: 0xd5d5d5,
+          shininess: 4,
+          specular: new THREE.Color(0x101010),
+        })
+      : new THREE.MeshBasicMaterial({
+          map: atlasTexture,
+          side: THREE.DoubleSide,
+          alphaTest: 0.01,
+        })
+    : new THREE.MeshPhongMaterial({
+        vertexColors: true,
+        side: THREE.DoubleSide,
+        shininess: 25,
+        specular: new THREE.Color(0x222222),
+      })
+  const terrain = new THREE.Mesh(geometry, terrainMaterial)
   terrain.name = "terrain"
   terrain.rotation.x = -Math.PI / 2
   scene.add(terrain)
+  const updateNearImagery = terrainMode === 'registration' ? createNearImagery(scene) : null
 
-  // 异步非阻塞加载天地图卫星纹理（对齐紧凑市域外包框）
-  generateSatelliteTexture(BOUNDS)
-    .then(satelliteTexture => {
-      if (satelliteTexture) {
-        applySatelliteTexture(terrain, satelliteTexture)
-      }
-    })
-    .catch(err => console.warn("[Satellite] 异步贴图加载异常:", err))
+  // Satellite imagery remains an explicit optional mode, rather than an
+  // unreliable dependency of the default map view.
+  if (terrainMode === "satellite") {
+    const footer = document.getElementById("terrain-mode-status")
+    if (footer) footer.textContent = "天地图卫星影像加载中…"
+    generateSatelliteTexture(BOUNDS)
+      .then(satelliteTexture => {
+        if (satelliteTexture) {
+          applySatelliteTexture(terrain, satelliteTexture)
+          if (footer) footer.textContent = "卫星影像：天地图；地形高程：ASTER GDEM V3"
+        } else if (footer) {
+          footer.textContent = "卫星影像未加载，当前显示本地高程设色地形"
+        }
+      })
+      .catch(err => {
+        if (footer) footer.textContent = "卫星影像未加载，当前显示本地高程设色地形"
+        console.warn("[Satellite] 异步贴图加载异常:", err)
+      })
+  } else if (terrainMode === "registration") {
+    const footer = document.getElementById("terrain-mode-status")
+    if (footer) footer.textContent = "配准影像：Esri、Maxar、Earthstar Geographics、GIS User Community｜起伏增强，仅供核查"
+    generateRegistrationReferenceTexture(grid)
+      .then(texture => applySatelliteTexture(terrain, texture))
+      .catch(err => {
+        if (footer) footer.textContent = "配准核查影像加载失败，当前显示本地地形纹理"
+        console.warn("[Registration] 参考影像加载失败:", err)
+      })
+  }
 
   const gridHelper = new THREE.GridHelper(200, 20, 0x2d3a5c, 0x1e2942)
   gridHelper.position.y = -0.5
@@ -269,7 +316,7 @@ export async function initScene(): Promise<THREE.Scene> {
     (e) => {
       e.preventDefault()
       desiredDist += e.deltaY * 0.25
-      desiredDist = Math.max(45, Math.min(750, desiredDist))
+      desiredDist = Math.max(18, Math.min(750, desiredDist))
     },
     { passive: false }
   )
@@ -321,9 +368,27 @@ export async function initScene(): Promise<THREE.Scene> {
     }
 
     camera.position.x = cameraTarget.x + activeDist * Math.sin(rotY) * Math.cos(rotX)
-    camera.position.y = cameraTarget.y + activeDist * Math.sin(rotX) + 32
+    camera.position.y = cameraTarget.y + activeDist * Math.sin(rotX) + 32 * Math.min(1, activeDist / 210)
     camera.position.z = cameraTarget.z + activeDist * Math.cos(rotY) * Math.cos(rotX)
     camera.lookAt(cameraTarget)
+
+    updateNearImagery?.(cameraTarget, activeDist, now)
+
+    if (terrainMode === 'registration') {
+      const boundary = scene.getObjectByName('boundary-group')
+      const scale = Math.max(0.18, Math.min(1, activeDist / 210))
+      boundary?.children.forEach(obj => {
+        if (obj.userData?.type === 'boundary-label-group') {
+          const sprite = obj.children.find(child => child instanceof THREE.Sprite) as THREE.Sprite | undefined
+          if (sprite) {
+            const emphasis = sprite.userData.highlightScale || 1
+            sprite.scale.set(sprite.userData.baseScaleX * scale * emphasis, sprite.userData.baseScaleY * scale * emphasis, 1)
+          }
+        } else if (obj.userData?.type === 'boundary-wall' && obj instanceof THREE.Mesh) {
+          ;(obj.material as THREE.MeshBasicMaterial).opacity = Math.max(0.08, Math.min(1, (activeDist - 20) / 140))
+        }
+      })
+    }
 
     renderer.render(scene, camera)
   }
