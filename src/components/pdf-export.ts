@@ -10,26 +10,26 @@ interface ReportSection {
 const reportSections: ReportSection[] = [
   {
     title: '一、城市概况',
-    content: '苏州市位于江苏省东南部，是国家历史文化名城和长三角核心城市。2025年全市GDP达2.77万亿元，常住人口1297万，下辖6个市辖区（含苏州工业园区）与4个县级市。',
+    content: '据苏州市统计局2025年统计公报，全年地区生产总值27695.1亿元，年末常住人口1304.77万人。以上是全市口径的初步统计数据；下方区县图表的年份并不一致，不能用来重建同年全市总量。',
   },
   {
     title: '二、经济发展与科技创新',
-    content: '2025年苏州实现地区生产总值2.77万亿元，三次产业结构为0.7:46.4:52.9。全市规模以上工业总产值超过4.5万亿元，高新技术企业达18500家。',
+    content: '2025年全市三次产业结构为0.7∶46.4∶52.9，规模以上工业总产值48966.4亿元，高新技术产业产值占规模以上工业总产值的56.2%。附图是项目现有的示意图表，指标和区县口径尚待逐项核对。',
     chartIds: ['industry', 'tech'],
   },
   {
     title: '三、人口分布与就业民生',
-    content: '全市常住人口1297万，城镇新增就业41.52万人。全体居民人均可支配收入8.08万元，其中城镇居民9.01万元、农村居民5.13万元，城乡收入比收窄至1.76:1。',
+    content: '2025年末全市常住人口1304.77万人；全年城镇新增就业41.5万人。全体居民人均可支配收入80796元，城镇居民90125元，农村居民51303元。区县人口图混用2023年与2025年资料，不适合直接解释同年空间差异。',
     chartIds: ['population', 'employment'],
   },
   {
     title: '四、城乡融合与生态环境',
-    content: '苏州是全国城乡融合发展先行区，城乡融合综合指数达81.0分。市区PM2.5年均浓度降至28微克/立方米，太湖连续三年水质稳定达到Ⅲ类。',
+    content: '2025年市区PM2.5年均浓度为28微克/立方米，国省考断面水质优Ⅲ比例为98.8%，湿地保护率为72.8%。页面中的城乡融合指数是自设权重与分值的算法演示，未经实测或论文验证，不能作为苏州现状评价。',
     chartIds: ['rural-urban-index', 'environment'],
   },
   {
     title: '五、公共服务与空间格局',
-    content: '苏州地铁年客运量7.15亿人次，全市拥有各级学校868所（不含幼儿园）、医疗机构5027家。住房价格呈现以工业园区、姑苏、高新区为核心的梯度结构。',
+    content: '2025年轨道交通（含有轨电车）客运量7.15亿人次；年末各级各类学校868所（不含幼儿园），医疗卫生机构5027家。公报仅提供全市总量，设施分布和住房价格图仍需独立来源与空间核验。',
     chartIds: ['traffic', 'housing'],
   },
 ]
@@ -59,7 +59,8 @@ export async function exportPDF() {
     <div style="border-bottom:2px solid #00d4ff;padding-bottom:20px;margin-bottom:24px;text-align:center">
       <h1 style="font-size:28px;color:#00d4ff;margin:0 0 8px 0">苏州市城乡数据可视化分析报告</h1>
       <div style="font-size:13px;color:#8a9ab8">Suzhou Urban-Rural Data Visualization Report · 生成日期：${new Date().toLocaleDateString('zh-CN')}</div>
-      <div style="font-size:12px;color:#6b7a99;margin-top:4px">苏州科技大学 城乡规划 · 指导教师：侯爱敏 教授</div>
+      <div style="font-size:12px;color:#6b7a99;margin-top:4px">项目演示版 · 图表与区县数据仍需逐项核验</div>
+      <div style="font-size:10px;color:#8a9ab8;margin-top:6px;overflow-wrap:anywhere">官方统计依据：https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml</div>
     </div>
   `
 
@@ -131,3 +132,4 @@ export async function exportPDF() {
     wrapper.remove()
   }
 }
+
