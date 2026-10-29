@@ -787,6 +787,15 @@ body {
   color: var(--text);
 }
 
+#story-content a {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .chart-focus {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
@@ -1096,3 +1105,4 @@ body {
     order: -1;
   }
 }
+
