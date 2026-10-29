@@ -50,6 +50,11 @@ export function resetCameraView() {
   rotX = 0.55
 }
 
+export function setMapViewDistance(distance: number) {
+  skipEntranceAnimation()
+  desiredDist = Math.max(18, Math.min(750, distance))
+}
+
 export function updateSceneTheme(scene: THREE.Scene, theme: string) {
   const bgHex = theme === "light" ? 0xdce6f2 : theme === "projection" ? 0x050814 : 0x0d1225
   scene.background = new THREE.Color(bgHex)
@@ -364,6 +369,13 @@ export async function initScene(): Promise<THREE.Scene> {
     const dampFactor = 1 - Math.exp(-6.5 * deltaSec)
     cameraTarget.lerp(desiredTarget, dampFactor)
     currentDist += (desiredDist - currentDist) * dampFactor
+
+    const viewLevel = desiredDist > 155 ? 'city' : desiredDist > 82 ? 'region' : 'near'
+    document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
+      const selected = button.dataset.viewLevel === viewLevel
+      button.classList.toggle('active', selected)
+      button.setAttribute('aria-pressed', String(selected))
+    })
 
     const elapsed = now - entranceStart
     let activeDist = currentDist
