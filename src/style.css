@@ -202,6 +202,13 @@ body {
   margin-top: 4px;
 }
 
+.legend-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin: 3px 0 5px;
+  max-width: 190px;
+}
+
 /* 右上角图层与飞线工具栏（位于画布右上角） */
 #toolbar {
   position: absolute;
