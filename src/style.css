@@ -350,6 +350,43 @@ body {
   backdrop-filter: blur(6px);
 }
 
+#map-scale {
+  position: absolute;
+  top: 166px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 120;
+  background: rgba(13,18,37,0.88);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  backdrop-filter: blur(6px);
+}
+
+#map-scale span {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-right: 3px;
+}
+
+#map-scale button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+#map-scale button.active,
+#map-scale button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* 左下角导出与专题分析工具栏（位于画布内部左下角） */
 #export-container {
   position: absolute;
