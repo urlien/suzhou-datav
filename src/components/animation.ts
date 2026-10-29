@@ -4,8 +4,7 @@ export function animateNumbers() {
 
   statValues.forEach(el => {
     const text = (el.textContent || '').trim()
-    // 注意：'万亿' 必须排在 '万' 前面，否则 '2.77万亿' 会被误截断为 '2.77万'
-    const match = text.match(/^([\d.]+)(万亿|万|km²)?$/)
+    const match = text.match(/^([\d.]+)(万亿|万|km²|亿|%)?$/)
     if (!match) return
 
     const targetStr = match[1]
@@ -33,3 +32,4 @@ export function animateNumbers() {
     requestAnimationFrame(update)
   })
 }
+

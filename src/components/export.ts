@@ -1,4 +1,4 @@
-// 数据导出功能（与 official-stats 权威数据源完全同步）
+// 数据导出功能；区县数据混合年份，逐项来源尚待核验。
 import { getDistrictData } from '../data/official-stats'
 
 export function initExport() {
@@ -25,15 +25,19 @@ function exportAsPng() {
 
 function exportAsCsv() {
   const districts = getDistrictData()
+  const population2025 = new Set(['相城区', '虎丘区', '吴江区'])
+  const gdp2025 = new Set(['吴中区', '相城区', '虎丘区', '吴江区'])
   const rows: string[][] = [
-    ['区县', 'GDP(亿元)', '常住人口(万人)', '面积(km²)', '人均GDP(万元)', '人口密度(人/km²)'],
+    ['区县', 'GDP(亿元)', 'GDP年份', '常住人口(万人)', '人口年份', '面积(km²)', '面积标注年份', '核验状态'],
     ...districts.map(d => [
       d.name,
       d.gdp.toFixed(2),
+      gdp2025.has(d.name) ? '2025' : '2024',
       d.population.toFixed(2),
+      population2025.has(d.name) ? '2025' : '2023',
       d.area.toFixed(2),
-      d.population > 0 ? (d.gdp / d.population).toFixed(2) : '0',
-      d.area > 0 ? Math.round((d.population * 10000) / d.area).toString() : '0',
+      '2025',
+      '逐项来源待核验',
     ]),
   ]
 
@@ -41,8 +45,9 @@ function exportAsCsv() {
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
-  link.download = `苏州市各区县权威统计数据_${new Date().toISOString().slice(0, 10)}.csv`
+  link.download = `苏州市各区县混合年份待核验数据_${new Date().toISOString().slice(0, 10)}.csv`
   link.href = url
   link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+

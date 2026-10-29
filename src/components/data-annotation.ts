@@ -5,23 +5,23 @@ interface DataSource {
   source: string
   year: string
   url?: string
-  reliability: 'official' | 'research' | 'media' | 'estimated'
+  reliability: 'official' | 'research' | 'media' | 'estimated' | 'unverified'
 }
 
 const dataSources: DataSource[] = [
-  { chartId: 'population', source: '苏州市统计局', year: '2024-2025', reliability: 'official' },
-  { chartId: 'industry', source: '苏州市统计局', year: '2025', reliability: 'official' },
-  { chartId: 'traffic', source: '苏州市交通运输局', year: '2025', reliability: 'official' },
-  { chartId: 'landuse', source: '苏州市自然资源和规划局', year: '2024', reliability: 'official' },
-  { chartId: 'education', source: '苏州市教育局', year: '2025', reliability: 'official' },
-  { chartId: 'medical', source: '苏州市卫健委/公立医院年报', year: '2024-2025', reliability: 'official' },
-  { chartId: 'tech', source: '苏州市科技局/统计年鉴', year: '2024-2025', reliability: 'official' },
-  { chartId: 'housing', source: '安居客/苏州楼盘网', year: '2025', reliability: 'media' },
-  { chartId: 'environment', source: '苏州市生态环境局', year: '2025', reliability: 'official' },
-  { chartId: 'employment', source: '苏州市人社局', year: '2025', reliability: 'official' },
-  { chartId: 'urban-rural', source: '苏州市统计局/城乡融合课题组', year: '2025', reliability: 'research' },
-  { chartId: 'factor-flow', source: '城乡要素流动模型', year: '2025', reliability: 'research' },
-  { chartId: 'industry-dist', source: '苏州市工信局', year: '2025', reliability: 'official' },
+  { chartId: 'population', source: '区县统计资料', year: '2023/2025 混合', reliability: 'unverified' },
+  { chartId: 'industry', source: '苏州市统计局', year: '2025', reliability: 'unverified' },
+  { chartId: 'traffic', source: '示意曲线', year: '未接入实测客流', reliability: 'unverified' },
+  { chartId: 'landuse', source: '示意分类', year: '待接入核实数据', reliability: 'unverified' },
+  { chartId: 'education', source: '苏州市教育局', year: '2025', reliability: 'unverified' },
+  { chartId: 'medical', source: '苏州市卫健委/公立医院年报', year: '2024-2025', reliability: 'unverified' },
+  { chartId: 'tech', source: '苏州市科技局/统计年鉴', year: '2024-2025', reliability: 'unverified' },
+  { chartId: 'housing', source: '安居客/苏州楼盘网', year: '2025', reliability: 'unverified' },
+  { chartId: 'environment', source: '苏州市生态环境局', year: '2025', reliability: 'unverified' },
+  { chartId: 'employment', source: '苏州市人社局', year: '2025', reliability: 'unverified' },
+  { chartId: 'urban-rural', source: '苏州市统计局/城乡融合课题组', year: '2025', reliability: 'unverified' },
+  { chartId: 'factor-flow', source: '城乡要素流动模型', year: '2025', reliability: 'unverified' },
+  { chartId: 'industry-dist', source: '苏州市工信局', year: '2025', reliability: 'unverified' },
 ]
 
 const reliabilityColors: Record<string, string> = {
@@ -29,6 +29,7 @@ const reliabilityColors: Record<string, string> = {
   research: '#00d4ff',
   media: '#ff9f43',
   estimated: '#6b7a99',
+  unverified: '#ff9f43',
 }
 
 const reliabilityLabels: Record<string, string> = {
@@ -36,6 +37,7 @@ const reliabilityLabels: Record<string, string> = {
   research: '研究数据',
   media: '媒体数据',
   estimated: '估算数据',
+  unverified: '示意／待核验',
 }
 
 export function initDataAnnotations() {
@@ -60,3 +62,6 @@ export function initDataAnnotations() {
 export function getDataSources() {
   return dataSources
 }
+
+
+

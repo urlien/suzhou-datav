@@ -29,27 +29,27 @@
         <div class="panel-title">📋 政策规划</div>
         <div class="policy-card">
           <div class="policy-title">城乡融合发展</div>
-          <div class="policy-desc">相城区城乡融合发展三年行动计划（2023-2025）</div>
+          <div class="policy-desc">从国土空间规划出发，观察城镇、乡村与生态空间的联系。<a href="https://www.suzhou.gov.cn/2024ndzt/szsgskjgh/202510/6eb6ca459e6c4a02a969ddb7d33ef946.shtml" target="_blank" rel="noopener noreferrer">规划原文 ↗</a></div>
         </div>
         <div class="policy-card">
           <div class="policy-title">乡村振兴</div>
-          <div class="policy-desc">吴江入选国家乡村振兴示范县，114个重点项目，总投资269亿</div>
+          <div class="policy-desc">2025年苏州新增省级宜居宜业和美乡村92个，累计231个；这是全市统计，不代表地图中的村庄点位。<a href="https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml" target="_blank" rel="noopener noreferrer">2025统计公报 ↗</a></div>
         </div>
         <div class="policy-card">
           <div class="policy-title">国土空间规划</div>
-          <div class="policy-desc">2021-2035年，耕地保有量≥193.77万亩，严守城镇开发边界</div>
+          <div class="policy-desc">市域总体规划统筹空间开发与保护；本图边界用于浏览，不是法定规划边界。<a href="https://www.suzhou.gov.cn/szsrmzf/szyw/202501/e438f80458b94cd1b5f6123d89128f17.shtml" target="_blank" rel="noopener noreferrer">规划批复报道 ↗</a></div>
         </div>
         <div class="policy-card">
           <div class="policy-title">🏗️ 重点项目</div>
-          <div class="policy-desc">2025年83个省重大+561个市重点项目，完成投资478.7亿元</div>
+          <div class="policy-desc">2025年全市固定资产投资5713.7亿元，其中工业投资2250.4亿元。统计范围是全市，不对应图上项目点。<a href="https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml" target="_blank" rel="noopener noreferrer">2025统计公报 ↗</a></div>
         </div>
         <div class="policy-card">
           <div class="policy-title">💰 招商引资</div>
-          <div class="policy-desc">签约亿元以上项目1594个，计划总投资5405亿元</div>
+          <div class="policy-desc">2025年全市新设外资项目1186个，实际使用外资58.1亿美元；公报未给出这些项目的地图点位。<a href="https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml" target="_blank" rel="noopener noreferrer">2025统计公报 ↗</a></div>
         </div>
         <div class="policy-card">
           <div class="policy-title">新型工业化</div>
-          <div class="policy-desc">"1030"产业体系，10个重点产业集群+30条重点产业链</div>
+          <div class="policy-desc">2025年高新技术产业产值占规模以上工业总产值的56.2%；产业空间分布仍需企业或园区数据核验。<a href="https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml" target="_blank" rel="noopener noreferrer">2025统计公报 ↗</a></div>
         </div>
 
         <div class="panel-title">📊 各区县常住人口</div>
@@ -68,10 +68,10 @@
 
         <!-- 左上角核心指标卡 -->
         <div id="stats">
-          <div class="stat-card"><div class="stat-value">1297万</div><div class="stat-label">常住人口</div></div>
-          <div class="stat-card"><div class="stat-value">2.77万亿</div><div class="stat-label">GDP总量</div></div>
-          <div class="stat-card"><div class="stat-value">8657km²</div><div class="stat-label">行政面积</div></div>
-          <div class="stat-card"><div class="stat-value">10</div><div class="stat-label">区县市(含园区)</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；初步核算"><div class="stat-value">27695.1亿</div><div class="stat-label">2025年GDP</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；按不变价格计算"><div class="stat-value">5.4%</div><div class="stat-label">2025年GDP增速</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；分母为规模以上工业总产值"><div class="stat-value">56.2%</div><div class="stat-label">高新技术产值占比</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；三次产业结构"><div class="stat-value">52.9%</div><div class="stat-label">第三产业占比</div></div>
         </div>
 
         <!-- 左上角空间分析按钮组（位于指标卡正下方，不遮挡左侧栏） -->
@@ -80,6 +80,13 @@
           <button id="btn-kernel-density" class="tool-btn" title="A级景区核密度分析">🔥 核密度</button>
           <button id="btn-ellipse" class="tool-btn" title="标准差椭圆方向分析">⭕ 椭圆分析</button>
           <button id="btn-accessibility" class="tool-btn" title="10/20/30/60分钟可达性等时圈">⏱️ 可达性</button>
+        </div>
+
+        <div id="map-scale" aria-label="地图视距">
+          <span>视距</span>
+          <button type="button" data-view-level="city" class="active" aria-pressed="true">全域</button>
+          <button type="button" data-view-level="region" aria-pressed="false">区域</button>
+          <button type="button" data-view-level="near" aria-pressed="false">近景</button>
         </div>
 
         <!-- 右上角图层与飞线切换工具栏 -->
@@ -92,10 +99,10 @@
           <button class="tool-btn active" data-layer="buildings">白膜</button>
           <div class="toolbar-divider"></div>
           <span class="toolbar-label">飞线：</span>
-          <button class="tool-btn active" data-flying="population">人口流动</button>
-          <button class="tool-btn" data-flying="transport">交通流量</button>
-          <button class="tool-btn" data-flying="logistics">物流货运</button>
-          <button class="tool-btn" data-flying="economic">经济联系</button>
+          <button class="tool-btn active" data-flying="population" title="示意飞线，未接入实测人口流动数据">人口流动</button>
+          <button class="tool-btn" data-flying="transport" title="示意飞线，未接入实测交通流量数据">交通流量</button>
+          <button class="tool-btn" data-flying="logistics" title="示意飞线，未接入实测物流货运数据">物流货运</button>
+          <button class="tool-btn" data-flying="economic" title="示意飞线，未接入实测经济联系数据">经济联系</button>
           <div class="toolbar-divider"></div>
           <button id="btn-reset-view" class="tool-btn" title="复位3D相机视角">🎯 复位</button>
         </div>
@@ -109,7 +116,7 @@
           <button id="projection-toggle" class="tool-btn" title="高对比度投影模式">📽️</button>
           <button id="export-pdf" class="tool-btn" title="导出PDF报告">📄 PDF报告</button>
           <button id="export-png" class="tool-btn" title="导出3D画布PNG">📷 PNG</button>
-          <button id="export-csv" class="tool-btn" title="导出权威统计CSV">📊 CSV</button>
+          <button id="export-csv" class="tool-btn" title="导出混合年份区县数据，逐项来源待核验">📊 CSV</button>
           <div class="toolbar-divider"></div>
           <button class="tool-btn drawer-tab-btn" data-drawer="timeline">📅 历年时间轴</button>
           <button class="tool-btn drawer-tab-btn" data-drawer="comparison">⚖️ 区县对比</button>
@@ -120,6 +127,7 @@
         <!-- 右下角图例 -->
         <div id="legend">
           <div class="legend-title">人口密度热力</div>
+          <div class="legend-note">专题图示意，区县数据年份与口径待统一</div>
           <div class="legend-bar"></div>
           <div class="legend-labels">
             <span>低</span><span>高</span>
@@ -178,14 +186,14 @@
         <div class="panel-title">💼 就业与居民收入</div>
         <div id="chart-employment" class="chart"></div>
 
-        <div class="panel-title">🏘️ 城乡融合发展指数</div>
+        <div class="panel-title">🏘️ 城乡融合指标原型（示意）</div>
         <div class="fusion-summary">
           <div class="fusion-score">
-            <span class="fusion-label">综合指数</span>
+            <span class="fusion-label">示例得分</span>
             <span id="fusion-index" class="fusion-value">--</span>
             <span class="fusion-unit">分</span>
           </div>
-          <div class="fusion-note">参考：侯爱敏《城乡融合：高水平共同富裕的苏州实践》</div>
+          <div class="fusion-note">权重与分值为项目自设演示，未经实测或论文验证</div>
         </div>
         <div id="chart-rural-urban-index" class="chart"></div>
 
@@ -198,7 +206,7 @@
     </div>
 
     <div id="footer">
-      <span>数据来源：苏州市统计局 · ASTER GDEM V3 · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span>
+      <span>官方统计参考：<a href="https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml" target="_blank" rel="noopener noreferrer">苏州2025统计公报</a> · 地形参考：ASTER GDEM V3 · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></span>
       <span id="terrain-mode-status"></span>
       <span>苏州科技大学 城乡规划</span>
     </div>
@@ -218,3 +226,4 @@
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>
+

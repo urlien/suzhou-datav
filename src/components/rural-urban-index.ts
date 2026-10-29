@@ -1,6 +1,5 @@
 // 城乡融合指标体系模块
-// 参考：侯爱敏《城乡融合：高水平共同富裕的苏州实践》
-// 指标体系基于导师论文方法论，涵盖7个维度
+// 项目自设的七维示意模型；权重和分值未经实测或论文验证。
 
 import * as echarts from 'echarts'
 import { registerChart } from './charts'
@@ -14,7 +13,7 @@ interface IndexDimension {
   description: string
 }
 
-// 苏州城乡融合指标体系（7个维度）
+// 城乡融合指标原型（7个维度，演示值）
 const dimensions: IndexDimension[] = [
   { name: '经济发展', weight: 0.20, urban: 92, rural: 68, unit: '分', description: '人均GDP、财政收入、产业结构' },
   { name: '居民收入', weight: 0.18, urban: 88, rural: 72, unit: '分', description: '城乡收入比、消费水平、恩格尔系数' },
@@ -91,3 +90,4 @@ export function getFusionIndex(): number {
   const ruralTotal = dimensions.reduce((sum, d) => sum + d.rural * d.weight, 0)
   return parseFloat(((urbanTotal + ruralTotal) / 2).toFixed(1))
 }
+

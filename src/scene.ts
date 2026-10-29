@@ -30,6 +30,10 @@ export function startEntranceAnimation() {
   entranceStart = performance.now()
 }
 
+export function skipEntranceAnimation() {
+  entranceStart = -Infinity
+}
+
 export function wasCanvasDragged(): boolean {
   return dragMoved
 }
@@ -44,6 +48,11 @@ export function resetCameraView() {
   desiredDist = 210
   rotY = 0.3
   rotX = 0.55
+}
+
+export function setMapViewDistance(distance: number) {
+  skipEntranceAnimation()
+  desiredDist = Math.max(18, Math.min(750, distance))
 }
 
 export function updateSceneTheme(scene: THREE.Scene, theme: string) {
@@ -280,11 +289,12 @@ export async function initScene(): Promise<THREE.Scene> {
   let isDragging = false
   let downX = 0, downY = 0
   let prevX = 0, prevY = 0
-  const entranceDuration = 1800
-  const startDist = 580
+  const entranceDuration = 5600
+  const startDist = 720
 
   canvas.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return
+    skipEntranceAnimation()
     isDragging = true
     dragMoved = false
     downX = prevX = e.clientX
@@ -315,6 +325,7 @@ export async function initScene(): Promise<THREE.Scene> {
     "wheel",
     (e) => {
       e.preventDefault()
+      skipEntranceAnimation()
       desiredDist += e.deltaY * 0.25
       desiredDist = Math.max(18, Math.min(750, desiredDist))
     },
@@ -359,11 +370,18 @@ export async function initScene(): Promise<THREE.Scene> {
     cameraTarget.lerp(desiredTarget, dampFactor)
     currentDist += (desiredDist - currentDist) * dampFactor
 
+    const viewLevel = desiredDist > 155 ? 'city' : desiredDist > 82 ? 'region' : 'near'
+    document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
+      const selected = button.dataset.viewLevel === viewLevel
+      button.classList.toggle('active', selected)
+      button.setAttribute('aria-pressed', String(selected))
+    })
+
     const elapsed = now - entranceStart
     let activeDist = currentDist
-    if (elapsed < entranceDuration) {
+    if (elapsed < entranceDuration && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const t = Math.max(0, elapsed / entranceDuration)
-      const ease = 1 - Math.pow(1 - t, 3) // easeOutCubic
+      const ease = t * t * (3 - 2 * t) // smoother spatial approach with gentle arrival
       activeDist = startDist + (currentDist - startDist) * ease
     }
 
@@ -374,21 +392,20 @@ export async function initScene(): Promise<THREE.Scene> {
 
     updateNearImagery?.(cameraTarget, activeDist, now)
 
-    if (terrainMode === 'registration') {
-      const boundary = scene.getObjectByName('boundary-group')
-      const scale = Math.max(0.18, Math.min(1, activeDist / 210))
-      boundary?.children.forEach(obj => {
-        if (obj.userData?.type === 'boundary-label-group') {
-          const sprite = obj.children.find(child => child instanceof THREE.Sprite) as THREE.Sprite | undefined
-          if (sprite) {
-            const emphasis = sprite.userData.highlightScale || 1
-            sprite.scale.set(sprite.userData.baseScaleX * scale * emphasis, sprite.userData.baseScaleY * scale * emphasis, 1)
-          }
-        } else if (obj.userData?.type === 'boundary-wall' && obj instanceof THREE.Mesh) {
-          ;(obj.material as THREE.MeshBasicMaterial).opacity = Math.max(0.08, Math.min(1, (activeDist - 20) / 140))
+    // 缩放层级影响标注与边界墙，所有地形模式保持一致的地图阅读层级。
+    const boundary = scene.getObjectByName('boundary-group')
+    const scale = Math.max(0.18, Math.min(1, activeDist / 210))
+    boundary?.children.forEach(obj => {
+      if (obj.userData?.type === 'boundary-label-group') {
+        const sprite = obj.children.find(child => child instanceof THREE.Sprite) as THREE.Sprite | undefined
+        if (sprite) {
+          const emphasis = sprite.userData.highlightScale || 1
+          sprite.scale.set(sprite.userData.baseScaleX * scale * emphasis, sprite.userData.baseScaleY * scale, 1)
         }
-      })
-    }
+      } else if (obj.userData?.type === 'boundary-wall' && obj instanceof THREE.Mesh) {
+        ;(obj.material as THREE.MeshBasicMaterial).opacity = Math.max(0.08, Math.min(1, (activeDist - 20) / 140))
+      }
+    })
 
     renderer.render(scene, camera)
   }
@@ -396,3 +413,4 @@ export async function initScene(): Promise<THREE.Scene> {
 
   return scene
 }
+

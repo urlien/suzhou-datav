@@ -202,11 +202,19 @@ body {
   margin-top: 4px;
 }
 
+.legend-note {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin: 3px 0 5px;
+  max-width: 190px;
+}
+
 /* 右上角图层与飞线工具栏（位于画布右上角） */
 #toolbar {
   position: absolute;
-  top: 14px;
+  top: 72px;
   right: 16px;
+  max-width: calc(100% - 32px);
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -336,7 +344,7 @@ body {
 /* 空间分析工具栏（位于画布左上角指标卡正下方，不遮挡左侧栏） */
 #spatial-toolbar {
   position: absolute;
-  top: 86px;
+  top: 126px;
   left: 16px;
   display: flex;
   align-items: center;
@@ -347,6 +355,49 @@ body {
   border-radius: 8px;
   padding: 5px 10px;
   backdrop-filter: blur(6px);
+}
+
+#map-scale {
+  position: absolute;
+  top: 166px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 120;
+  background: rgba(13,18,37,0.88);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  backdrop-filter: blur(6px);
+}
+
+#map-scale span {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-right: 3px;
+}
+
+#map-scale button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 4px 7px;
+}
+
+#map-scale button.active,
+#map-scale button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.policy-desc a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* 左下角导出与专题分析工具栏（位于画布内部左下角） */
@@ -787,6 +838,15 @@ body {
   color: var(--text);
 }
 
+#story-content a {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .chart-focus {
   outline: 2px solid var(--accent);
   outline-offset: 4px;
@@ -1096,3 +1156,4 @@ body {
     order: -1;
   }
 }
+
