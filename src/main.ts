@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import { initScene, resetCameraView, startEntranceAnimation, updateSceneTheme } from "./scene"
+import { initScene, resetCameraView, setMapViewDistance, startEntranceAnimation, updateSceneTheme } from "./scene"
 import { initCharts, resizeAllCharts, updateChartsTheme } from "./components/charts"
 import { addHeatmap, toggleHeatmap } from "./components/heatmap"
 import { addFlyingLines, switchFlyingLineSystem } from "./components/flying-lines"
@@ -61,6 +61,13 @@ async function main() {
   if (camera && canvas) {
     setupEnhancedInteraction(camera, canvas, scene)
   }
+
+  document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
+    button.addEventListener('click', () => {
+      const distance = { city: 210, region: 110, near: 55 }[button.dataset.viewLevel || 'city']
+      if (distance) setMapViewDistance(distance)
+    })
+  })
 
   // 底部工具栏 - 4个图层切换（地形、行政边界、人口热力、3D建筑）
   const toolbar = document.getElementById("toolbar")
@@ -249,3 +256,4 @@ async function main() {
 }
 
 main()
+
