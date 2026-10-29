@@ -205,8 +205,9 @@ body {
 /* 右上角图层与飞线工具栏（位于画布右上角） */
 #toolbar {
   position: absolute;
-  top: 14px;
+  top: 72px;
   right: 16px;
+  max-width: calc(100% - 32px);
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -336,7 +337,7 @@ body {
 /* 空间分析工具栏（位于画布左上角指标卡正下方，不遮挡左侧栏） */
 #spatial-toolbar {
   position: absolute;
-  top: 86px;
+  top: 126px;
   left: 16px;
   display: flex;
   align-items: center;
