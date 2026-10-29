@@ -272,10 +272,10 @@ export function addStandardDeviationalEllipse(scene: THREE.Scene): THREE.Group {
 }
 
 /**
- * 3. 基于通行阻力的 Dijkstra 真实等时圈分析（Cost-Distance Isochrone）：
- * - 构建 85x85 道路走廊与水体通行阻抗场（高速走廊 80km/h、普通道路 36km/h、太湖/阳澄湖 6km/h）
- * - 从古城区中心（苏州站枢纽）执行 Dijkstra 最短旅行时间，计算到达全图各点的真实用时（分钟）
- * - 渲染符合现代交通网络星芒外延形态的真实等时圈分级面与等值线
+ * 3. 示意性通行阻力模型（Cost-Distance Isochrone prototype）：
+ * - 在 85x85 网格中手工设定道路走廊和水体阻抗；速度是假设值，不是实测路网。
+ * - 从姑苏中心示意起点执行 Dijkstra，得到模型旅行时间，不能解释为现实到达用时。
+ * - 渲染模型分级面与等值线，正式可达性分析需接入可验证的路网、速度和起点。
  */
 export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
   const existing = scene.getObjectByName('accessibility-group') as THREE.Group | undefined
@@ -287,7 +287,7 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
   const group = new THREE.Group()
   group.name = 'accessibility-group'
 
-  // 起点：姑苏中心城区（苏州火车站枢纽）
+  // 示意起点：姑苏中心城区附近
   const startGeo = geoTo3D(31.32, 120.61)
   const gridN = 85
   const extent = 90 // 场景范围 [-90, 90]
@@ -558,3 +558,4 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
   scene.add(group)
   return group
 }
+
