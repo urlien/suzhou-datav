@@ -42,6 +42,18 @@ const storySteps: StoryStep[] = [
     highlight: ['相城区'],
   },
   {
+    title: '一张城市账本：产业与服务如何并存',
+    content: '2025年苏州地区生产总值为27695.1亿元，三次产业结构为0.7∶46.4∶52.9。第二产业增加值12844.4亿元，第三产业增加值14641.8亿元；高新技术产业产值占规模以上工业总产值的56.2%。这些指标说明全市经济结构，不能直接投影为某个区县的空间分布。若要回答制造业集中在哪里、服务业与居住区如何联系，还需要统一年份的企业、就业、土地利用与通勤数据，并说明统计单位与地图单元能否对应。',
+    sourceTitle: '2025年苏州市国民经济和社会发展统计公报｜苏州市统计局',
+    sourceUrl: 'https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml',
+  },
+  {
+    title: '乡村指标：从全市变化走向地方问题',
+    content: '2025年苏州新建省级特色田园乡村9个，累计87个；新增省级宜居宜业和美乡村92个，累计231个。它们来自统计公报的全市汇总，尚不能在地图上精确定位或证明每个村庄的建设效果。下一步可按村庄名称和认定批次建立来源表，再叠加人口、公共服务、河湖与交通可达性，比较不同类型地区的变化。未来加入论文时，应保留原始统计、政策文本与研究解释三种证据各自的出处。',
+    sourceTitle: '2025年苏州市国民经济和社会发展统计公报｜苏州市统计局',
+    sourceUrl: 'https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml',
+  },
+  {
     title: '从城市走向乡村：把建设放回具体地方',
     content: '《苏州市乡村建设条例》要求乡村建设符合国土空间规划、村庄规划及相关用途管制，并将乡村建设纳入地方发展规划与年度计划。未来的城乡专题可以围绕村庄、公共服务、产业和交通联系逐层展开，但每个图层都需要明确空间范围与资料年份。论文材料加入后，可在这里增加研究视角和争议，而不是用论文替代法规或把概念图误称为政策实施成效。',
     sourceTitle: '苏州市乡村建设条例｜苏州市人民政府',
@@ -153,3 +165,4 @@ function clearHighlights() {
   document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'))
   document.querySelectorAll('.chart-focus').forEach(el => el.classList.remove('chart-focus'))
 }
+
