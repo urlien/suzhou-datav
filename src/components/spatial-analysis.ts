@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { geoTo3D, getTerrainHeightAtXZ } from '../utils/geo'
 
-// 苏州 24 个国家 A 级景区真实经纬度与等级（5A/4A）
+// 苏州 24 个景区示意点位与等级；坐标和等级仍需逐点核验。
 const scenicSpots = [
   { name: '拙政园', lat: 31.3281, lon: 120.6313, level: 5 },
   { name: '留园', lat: 31.3194, lon: 120.6169, level: 5 },
@@ -33,7 +33,7 @@ const scenicSpots = [
  * 1. 自适应核密度分析（Adaptive Kernel Density Estimation）：
  * - 使用 Silverman 经验法则计算理论最优带宽：h = 0.9 * min(σ, IQR/1.34) * n^(-1/5)
  * - 结合景区等级（5A 权重 2.0，4A 权重 1.0）加权计算
- * - 采样高度实时叠加真实 DEM 高程，生成自然贴合地形的立体密度曲面
+ * - 采样当前地形高度，生成贴合场景的立体密度曲面
  */
 export function addKernelDensity(scene: THREE.Scene): THREE.Mesh {
   const existing = scene.getObjectByName('kernel-density') as THREE.Mesh | undefined
@@ -108,7 +108,7 @@ export function addKernelDensity(scene: THREE.Scene): THREE.Mesh {
       r = 1.0; g = 0.85 - t * 0.65; b = 0.0; a = 0.83 + t * 0.15
     }
 
-    // 贴合真实 DEM 高程，并在高密度集聚区形成隆起
+  // 贴合当前地形高度，并在高密度集聚区形成隆起
     const terrainY = getTerrainHeightAtXZ(gx, gz)
     positions.setZ(i, terrainY + 0.35 + d * 2.4)
 
@@ -400,7 +400,7 @@ export function addAccessibilityAnalysis(scene: THREE.Scene): THREE.Group {
     }
   }
 
-  // 3. 构建 4 级真实等时面网格几何体（10min / 20min / 30min / 60min）
+  // 3. 构建 4 级模型旅行时间网格几何体（10min / 20min / 30min / 60min）
   const positions: number[] = []
   const colors: number[] = []
   const indices: number[] = []
