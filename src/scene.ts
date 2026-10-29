@@ -30,6 +30,10 @@ export function startEntranceAnimation() {
   entranceStart = performance.now()
 }
 
+export function skipEntranceAnimation() {
+  entranceStart = -Infinity
+}
+
 export function wasCanvasDragged(): boolean {
   return dragMoved
 }
@@ -280,11 +284,12 @@ export async function initScene(): Promise<THREE.Scene> {
   let isDragging = false
   let downX = 0, downY = 0
   let prevX = 0, prevY = 0
-  const entranceDuration = 1800
-  const startDist = 580
+  const entranceDuration = 5600
+  const startDist = 720
 
   canvas.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return
+    skipEntranceAnimation()
     isDragging = true
     dragMoved = false
     downX = prevX = e.clientX
@@ -315,6 +320,7 @@ export async function initScene(): Promise<THREE.Scene> {
     "wheel",
     (e) => {
       e.preventDefault()
+      skipEntranceAnimation()
       desiredDist += e.deltaY * 0.25
       desiredDist = Math.max(18, Math.min(750, desiredDist))
     },
@@ -361,9 +367,9 @@ export async function initScene(): Promise<THREE.Scene> {
 
     const elapsed = now - entranceStart
     let activeDist = currentDist
-    if (elapsed < entranceDuration) {
+    if (elapsed < entranceDuration && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const t = Math.max(0, elapsed / entranceDuration)
-      const ease = 1 - Math.pow(1 - t, 3) // easeOutCubic
+      const ease = t * t * (3 - 2 * t) // smoother spatial approach with gentle arrival
       activeDist = startDist + (currentDist - startDist) * ease
     }
 

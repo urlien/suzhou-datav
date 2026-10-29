@@ -6,40 +6,47 @@ import { highlightDistrictBoundary } from './boundary'
 interface StoryStep {
   title: string
   content: string
+  sourceTitle: string
+  sourceUrl: string
   highlight?: string[]
   chartFocus?: string
 }
 
 const storySteps: StoryStep[] = [
   {
-    title: '苏州：千年古城的现代化蝶变',
-    content: '苏州，一座拥有2500年历史的文化名城，2025年GDP达到2.77万亿元，位居全国第六。常住人口1297万，城镇化率超过75%。这座城市的魅力在于，它既保留了古典园林的精致，又拥有现代都市的活力。',
+    title: '从全市看苏州：发展与保护同时展开',
+    content: '苏州市国土空间总体规划（2021—2035年）统筹安排市域的空间开发与保护。国务院批复强调，苏州要发挥先进制造业、科技创新、现代物流和江南水乡旅游等方面的功能，同时保护自然资源与历史文化。这张地图从全市尺度开始：先看太湖、长江与城镇分布，再沿区县边界走进不同地区。地图上的高亮是浏览入口，并不代表规划用地边界或项目选址结论。',
+    sourceTitle: '苏州市国土空间总体规划获批｜苏州市人民政府',
+    sourceUrl: 'https://www.suzhou.gov.cn/szsrmzf/szyw/202501/e438f80458b94cd1b5f6123d89128f17.shtml',
     highlight: ['姑苏区'],
-    chartFocus: 'population',
   },
   {
-    title: '房价梯度：从3万到8千的城市断面',
-    content: '苏州房价呈现明显的圈层分化。工业园区以30279元/㎡领跑全市，是张家港8764元/㎡的3.5倍。核心区（工业园区、姑苏区）均价2.5-3.5万元/㎡，新兴板块（吴中区、高新区）1.6-2.3万元/㎡，远郊区域（吴江区、相城区）1.2-1.5万元/㎡。',
-    highlight: ['苏州工业园区'],
-    chartFocus: 'housing',
-  },
-  {
-    title: '就业引擎：549万人的劳动大军',
-    content: '2025年苏州城镇新增就业41.52万人，连续6年荣获中国年度最佳促进就业城市。年末有效用工备案人数达549.35万人，失业保险参保553.21万人。创业带动就业13.24万人，展现出强大的经济韧性。',
-    highlight: ['昆山市'],
-    chartFocus: 'employment',
-  },
-  {
-    title: '生态答卷：PM2.5降至28μg/m³',
-    content: '2025年苏州生态环境质量稳中向好。市区PM2.5年均浓度降至28微克/立方米，连续5年达到国家二级标准。太湖连续三年水质稳定达到Ⅲ类。全市完成造林绿化6552亩，生态保护修复面积720.79公顷。',
+    title: '江南水网：在生态约束中理解城市',
+    content: '苏州的水网和湖荡是理解城市空间的起点。规划文本将自然资源保护、生态空间和城乡建设放在同一张市域图上讨论。浏览水系图层时，可以观察太湖周边、沿江地区与城市建设空间之间的关系；但当前图层取自 OpenStreetMap 提取数据，不能把它当作官方河湖划界或土地调查成果。后续可叠加经核验的湿地、河道与生态保护资料，形成可比较的专题。',
+    sourceTitle: '苏州市国土空间总体规划（2021—2035年）｜苏州市人民政府',
+    sourceUrl: 'https://www.suzhou.gov.cn/2024ndzt/szsgskjgh/202510/6eb6ca459e6c4a02a969ddb7d33ef946.shtml',
     highlight: ['吴中区'],
-    chartFocus: 'environment',
   },
   {
-    title: '城乡融合：从二元到一体的探索',
-    content: '苏州是全国城乡融合发展先行区。侯爱敏教授的研究表明，苏州通过城乡要素流动、集体经济引领、共建共享机制等七个维度探索高水平共同富裕路径。吴江入选国家乡村振兴示范县，114个重点项目总投资269亿元。',
+    title: '各地的角色：一座城市，多种空间路径',
+    content: '区县总体规划批复给不同地区提出了不同定位：吴江侧重长三角生态绿色一体化发展示范区，昆山强调临沪对台与产业科创，太仓强调港产城一体化，苏州工业园区强调开放创新。点击区县可以从这些官方定位进入地方故事，继续查找对应的产业、人口、交通和生态材料。这里展示的是规划定位，不等同于已经实现的结果；不同统计口径的区县指标也不宜直接排名。',
+    sourceTitle: '苏州相关县级市（区）总规获批｜苏州市人民政府',
+    sourceUrl: 'https://www.suzhou.gov.cn/szsrmzf/szyw/202502/103bfa7f0f2c4e0a9d0e603835c4cdfa.shtml',
+    highlight: ['昆山市'],
+  },
+  {
+    title: '用统计公报读变化，也读清统计口径',
+    content: '2024年苏州市统计公报记录了经济、人口、交通、环境、公共服务等多方面情况，也在注释中交代了部分指标的数据来源与口径变化。例如公路客运统计自2024年起调整范围，因此跨年比较需要先读注释。地图中的每项数字应当保留年份、单位、统计范围和原始出处；在区县数据尚未统一到同一年之前，图表更适合用于查阅，不适合直接推断同年高低。',
+    sourceTitle: '2024年苏州市国民经济和社会发展统计公报｜苏州市统计局',
+    sourceUrl: 'https://tjj.suzhou.gov.cn/sztjj/tjgb/202504/c77512c90a144784beba4870a6b5cc0d.shtml',
+    highlight: ['相城区'],
+  },
+  {
+    title: '从城市走向乡村：把建设放回具体地方',
+    content: '《苏州市乡村建设条例》要求乡村建设符合国土空间规划、村庄规划及相关用途管制，并将乡村建设纳入地方发展规划与年度计划。未来的城乡专题可以围绕村庄、公共服务、产业和交通联系逐层展开，但每个图层都需要明确空间范围与资料年份。论文材料加入后，可在这里增加研究视角和争议，而不是用论文替代法规或把概念图误称为政策实施成效。',
+    sourceTitle: '苏州市乡村建设条例｜苏州市人民政府',
+    sourceUrl: 'https://www.suzhou.gov.cn/szsrmzf/gbdfxfg/202403/3b495796eac04e53b82b1cc8ebc6cbfe.shtml',
     highlight: ['吴江区'],
-    chartFocus: 'rural-urban-index',
   },
 ]
 
@@ -95,7 +102,15 @@ function renderStep() {
     content.style.transform = 'translateY(10px)'
     setTimeout(() => {
       if (title) title.textContent = step.title
-      content.innerHTML = `<p>${step.content}</p>`
+      content.replaceChildren()
+      const paragraph = document.createElement('p')
+      paragraph.textContent = step.content
+      const source = document.createElement('a')
+      source.href = step.sourceUrl
+      source.target = '_blank'
+      source.rel = 'noopener noreferrer'
+      source.textContent = `资料来源：${step.sourceTitle} ↗`
+      content.append(paragraph, source)
       content.style.opacity = '1'
       content.style.transform = 'translateY(0)'
     }, 150)
