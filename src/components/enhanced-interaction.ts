@@ -1,6 +1,7 @@
 // 增强交互模块 - 基于 Raycaster 精确多边形拾取 + 区县点击下钻弹窗 + 相机飞行联动
 import * as THREE from 'three'
 import { areaData, districtDetails, gdpData, getDistrictDetail, populationData, type DistrictDetailInfo } from '../data/official-stats'
+import { districtPlanningNotes, districtPlanningSource } from '../data/planning-narratives'
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, normalizeDistrictName } from '../utils/geo'
 import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
 import { districtAtXZ, highlightDistrictBoundary } from './boundary'
@@ -135,6 +136,7 @@ export function setupEnhancedInteraction(
 }
 
 function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
+  const planningNote = districtPlanningNotes[name]
   const subDistrictsHtml = d.subDistricts?.map(sd => `
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
       <span>${sd.name}</span>
@@ -153,7 +155,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
 
   return `
     <div style="padding:16px;color:var(--text);font-family:'Segoe UI','PingFang SC',sans-serif">
-      <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;text-align:right">数据来源：苏州市统计局 · 官方统计公报</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;text-align:right">统计指标年份与来源待逐项核验；当前数值请勿直接用于同年比较</div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div class="detail-card">
@@ -186,6 +188,12 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
         <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">${d.desc}</div>
       </div>
 
+      ${planningNote ? `<div style="margin-bottom:16px;line-height:1.7;font-size:12px;color:var(--text)">
+        <div style="font-size:13px;color:var(--accent);margin-bottom:6px">规划定位与阅读线索</div>
+        <p>${planningNote}</p>
+        <a href="${districtPlanningSource.url}" target="_blank" rel="noopener noreferrer">资料来源：${districtPlanningSource.title} ↗</a>
+      </div>` : ''}
+
       ${d.subDistricts ? `
         <div style="margin-bottom:16px">
           <div style="font-size:13px;color:var(--accent);margin-bottom:8px">📍 重点下辖板块 / 镇街</div>
@@ -202,3 +210,4 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
     </div>
   `
 }
+
