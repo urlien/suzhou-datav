@@ -387,6 +387,12 @@ body {
   color: var(--accent);
 }
 
+.policy-desc a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* 左下角导出与专题分析工具栏（位于画布内部左下角） */
 #export-container {
   position: absolute;
