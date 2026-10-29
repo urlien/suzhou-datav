@@ -168,7 +168,7 @@ async function main() {
     } else {
       addAccessibilityAnalysis(scene)
       btn.classList.add("active")
-      if (legendTitleEl) legendTitleEl.textContent = "中心枢纽交通等时圈 (10~60min)"
+      if (legendTitleEl) legendTitleEl.textContent = "通行阻力模型（10~60分钟示意）"
     }
   })
 
