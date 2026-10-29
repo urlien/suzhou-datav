@@ -1,7 +1,7 @@
 // 增强交互模块 - 基于 Raycaster 精确多边形拾取 + 区县点击下钻弹窗 + 相机飞行联动
 import * as THREE from 'three'
 import { areaData, districtDetails, gdpData, getDistrictDetail, populationData, type DistrictDetailInfo } from '../data/official-stats'
-import { districtPlanningNotes, districtPlanningSource } from '../data/planning-narratives'
+import { districtPlanningNotes, districtPlanningSource, gusuHeritageSource } from '../data/planning-narratives'
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, normalizeDistrictName } from '../utils/geo'
 import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
 import { districtAtXZ, highlightDistrictBoundary } from './boundary'
@@ -137,6 +137,7 @@ export function setupEnhancedInteraction(
 
 function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
   const planningNote = districtPlanningNotes[name]
+  const planningSource = name === '姑苏区' ? gusuHeritageSource : districtPlanningSource
   const subDistrictsHtml = d.subDistricts?.map(sd => `
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
       <span>${sd.name}</span>
@@ -191,7 +192,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
       ${planningNote ? `<div style="margin-bottom:16px;line-height:1.7;font-size:12px;color:var(--text)">
         <div style="font-size:13px;color:var(--accent);margin-bottom:6px">规划定位与阅读线索</div>
         <p>${planningNote}</p>
-        <a href="${districtPlanningSource.url}" target="_blank" rel="noopener noreferrer">资料来源：${districtPlanningSource.title} ↗</a>
+        <a href="${planningSource.url}" target="_blank" rel="noopener noreferrer">资料来源：${planningSource.title} ↗</a>
       </div>` : ''}
 
       ${d.subDistricts ? `
@@ -210,4 +211,5 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
     </div>
   `
 }
+
 
