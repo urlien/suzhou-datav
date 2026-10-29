@@ -380,21 +380,20 @@ export async function initScene(): Promise<THREE.Scene> {
 
     updateNearImagery?.(cameraTarget, activeDist, now)
 
-    if (terrainMode === 'registration') {
-      const boundary = scene.getObjectByName('boundary-group')
-      const scale = Math.max(0.18, Math.min(1, activeDist / 210))
-      boundary?.children.forEach(obj => {
-        if (obj.userData?.type === 'boundary-label-group') {
-          const sprite = obj.children.find(child => child instanceof THREE.Sprite) as THREE.Sprite | undefined
-          if (sprite) {
-            const emphasis = sprite.userData.highlightScale || 1
-            sprite.scale.set(sprite.userData.baseScaleX * scale * emphasis, sprite.userData.baseScaleY * scale * emphasis, 1)
-          }
-        } else if (obj.userData?.type === 'boundary-wall' && obj instanceof THREE.Mesh) {
-          ;(obj.material as THREE.MeshBasicMaterial).opacity = Math.max(0.08, Math.min(1, (activeDist - 20) / 140))
+    // 缩放层级影响标注与边界墙，所有地形模式保持一致的地图阅读层级。
+    const boundary = scene.getObjectByName('boundary-group')
+    const scale = Math.max(0.18, Math.min(1, activeDist / 210))
+    boundary?.children.forEach(obj => {
+      if (obj.userData?.type === 'boundary-label-group') {
+        const sprite = obj.children.find(child => child instanceof THREE.Sprite) as THREE.Sprite | undefined
+        if (sprite) {
+          const emphasis = sprite.userData.highlightScale || 1
+          sprite.scale.set(sprite.userData.baseScaleX * scale * emphasis, sprite.userData.baseScaleY * scale, 1)
         }
-      })
-    }
+      } else if (obj.userData?.type === 'boundary-wall' && obj instanceof THREE.Mesh) {
+        ;(obj.material as THREE.MeshBasicMaterial).opacity = Math.max(0.08, Math.min(1, (activeDist - 20) / 140))
+      }
+    })
 
     renderer.render(scene, camera)
   }
@@ -402,3 +401,4 @@ export async function initScene(): Promise<THREE.Scene> {
 
   return scene
 }
+
