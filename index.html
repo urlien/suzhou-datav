@@ -99,6 +99,7 @@
           <span class="toolbar-label">图层：</span>
           <button class="tool-btn active" data-layer="terrain">地形</button>
           <button class="tool-btn active" data-layer="landcover" title="OpenStreetMap 已标注的水面与林地">水系林地</button>
+          <button class="tool-btn active" data-layer="roads" type="button" aria-pressed="true" title="基于 OpenStreetMap 道路位置绘制的夜间视觉演绎；非实测灯光">道路夜景</button>
           <button class="tool-btn active" data-layer="boundary">边界</button>
           <button class="tool-btn" data-layer="heatmap">热力</button>
           <button class="tool-btn active" data-layer="buildings">白膜</button>
@@ -114,6 +115,7 @@
 
         <!-- 左下角悬浮信息提示 -->
         <div id="terrain-info"></div>
+        <div id="night-map-note">道路夜景为视觉演绎，非实测灯光 · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></div>
 
         <!-- 左下角综合工具与专题抽屉开关（位于画布内部左下角） -->
         <div id="export-container">
@@ -165,10 +167,14 @@
       <!-- 右侧数据面板 -->
       <div id="right-panel" class="panel">
         <div class="region-feature">
-          <span class="region-feature-kicker">区域导览</span>
-          <strong>姑苏区</strong>
-          <p>千年古城 · 江南文脉。以真实行政边界和可追溯资料为线索，进入区域详情。</p>
-          <button id="featured-district" type="button">查看区域资料 ↗</button>
+          <img class="region-feature-image" src="/images/gusu-shantang-night.jpg" alt="苏州山塘河夜景：河道两侧的传统建筑与灯笼" width="960" height="640">
+          <div class="region-feature-content">
+            <span class="region-feature-kicker">区域导览 · 山塘河夜景</span>
+            <strong>姑苏区</strong>
+            <p>千年古城 · 江南文脉。沿真实行政边界与可追溯资料，进入区域详情。</p>
+            <button id="featured-district" type="button">查看区域资料 ↗</button>
+            <small class="region-feature-credit">照片：<a href="https://commons.wikimedia.org/wiki/File:Shantang_Canal_at_Night.jpg" target="_blank" rel="noopener noreferrer">Chinatravelsavvy</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a><br>封面裁切</small>
+          </div>
         </div>
         <div class="panel-title">2025 全市概览</div>
         <div id="stats">
