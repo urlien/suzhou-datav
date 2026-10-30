@@ -1,5 +1,6 @@
 // 数据导出功能；区县数据混合年份，逐项来源尚待核验。
 import { gdpYearData, getDistrictData, populationYearData, verifiedDistrictSources } from '../data/official-stats'
+import { captureMapImage } from '../scene'
 
 export function initExport() {
   const exportPngBtn = document.getElementById('export-png')
@@ -14,12 +15,12 @@ export function initExport() {
 }
 
 function exportAsPng() {
-  const canvas = document.getElementById('canvas') as HTMLCanvasElement
-  if (!canvas) return
+  const image = captureMapImage()
+  if (!image) return
 
   const link = document.createElement('a')
   link.download = `苏州市3D数据可视化_${new Date().toISOString().slice(0, 10)}.png`
-  link.href = canvas.toDataURL('image/png')
+  link.href = image
   link.click()
 }
 

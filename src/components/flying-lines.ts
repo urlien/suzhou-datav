@@ -115,35 +115,43 @@ function createFlyingLineGroup(data: FlyingLineData): THREE.Group {
 
     // 弧高随距离和强度自适应
     const dist = startPos.distanceTo(endPos)
-    const arcHeight = Math.max(8, dist * 0.32 + line.strength * 12)
+    const arcHeight = Math.max(12, dist * 0.42 + line.strength * 14)
     const midPoint = new THREE.Vector3(
       (startPos.x + endPos.x) / 2,
-      arcHeight,
+      Math.max(startY, endY) + arcHeight,
       (startPos.z + endPos.z) / 2
     )
 
     const curve = new THREE.QuadraticBezierCurve3(startPos, midPoint, endPos)
 
-    // 高强度飞线使用实心发光细管（TubeGeometry），普通飞线使用渐变弧线
-    const tubeRadius = 0.08 + line.strength * 0.14
-    const tubeGeo = new THREE.TubeGeometry(curve, 36, tubeRadius, 6, false)
+    // 全域视距下保持可辨的主体和柔光，仍只是关系示意。
+    const tubeRadius = 0.24 + line.strength * 0.24
     const lineColor = new THREE.Color(data.color).lerp(new THREE.Color(data.secondaryColor), 1 - line.strength)
+    const halo = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 28, tubeRadius * 2.2, 5, false),
+      new THREE.MeshBasicMaterial({ color: lineColor, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false })
+    )
+    halo.renderOrder = 20
+    group.add(halo)
     const tubeMat = new THREE.MeshBasicMaterial({
       color: lineColor,
       transparent: true,
-      opacity: 0.22 + line.strength * 0.38,
+      opacity: 0.64 + line.strength * 0.22,
       blending: THREE.AdditiveBlending,
+      depthTest: false,
       depthWrite: false,
     })
-    group.add(new THREE.Mesh(tubeGeo, tubeMat))
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 28, tubeRadius, 6, false), tubeMat)
+    tube.renderOrder = 21
+    group.add(tube)
 
-    // 彗星拖尾粒子组（主粒子 + 2个尾迹粒子）
+    // 每条连接只保留一个移动光点和一个尾迹，控制全域绘制开销。
     const baseSpeed = 0.0022 + line.strength * 0.0025
-    for (let p = 0; p < 2; p++) {
+    for (let p = 0; p < 1; p++) {
       const headProgress = p * 0.5
-      const tailLengths = [0, 0.035, 0.07]
-      const radii = [0.42, 0.28, 0.16]
-      const opacities = [0.98, 0.65, 0.35]
+      const tailLengths = [0, 0.045]
+      const radii = [0.9, 0.48]
+      const opacities = [1, 0.52]
 
       for (let t = 0; t < tailLengths.length; t++) {
         const sphereGeo = new THREE.SphereGeometry(radii[t], 8, 8)
@@ -152,9 +160,12 @@ function createFlyingLineGroup(data: FlyingLineData): THREE.Group {
           transparent: true,
           opacity: opacities[t],
           blending: THREE.AdditiveBlending,
+          depthTest: false,
           depthWrite: false,
         })
         const particle = new THREE.Mesh(sphereGeo, sphereMat)
+        particle.renderOrder = 22
+        particle.position.copy(curve.getPoint((headProgress - tailLengths[t] + 1) % 1))
         particle.userData = {
           curve,
           progress: (headProgress - tailLengths[t] + 1) % 1,
@@ -172,14 +183,17 @@ function createFlyingLineGroup(data: FlyingLineData): THREE.Group {
     const pos = geoTo3D(coords.lat, coords.lon)
     const y = getTerrainHeightAtXZ(pos.x, pos.z) + 0.6
     const marker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.65, 12, 12),
+      new THREE.SphereGeometry(1.2, 10, 10),
       new THREE.MeshBasicMaterial({
         color: data.color,
         transparent: true,
         opacity: 0.9,
         blending: THREE.AdditiveBlending,
+        depthTest: false,
+        depthWrite: false,
       })
     )
+    marker.renderOrder = 22
     marker.position.set(pos.x, y, pos.z)
     group.add(marker)
   })

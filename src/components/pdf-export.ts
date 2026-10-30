@@ -1,5 +1,6 @@
 // PDF分析报告导出模块
 // 通过离屏 HTML + html2canvas 渲染后注入 jsPDF，彻底解决 jsPDF 原生不支持中文字体乱码的问题
+import { captureMapImage } from '../scene'
 
 interface ReportSection {
   title: string
@@ -52,8 +53,7 @@ export async function exportPDF() {
     box-sizing: border-box;
   `
 
-  const mapCanvas = document.getElementById('canvas') as HTMLCanvasElement | null
-  const mapSnapshot = mapCanvas ? mapCanvas.toDataURL('image/png') : ''
+  const mapSnapshot = captureMapImage()
 
   let sectionsHtml = `
     <div style="border-bottom:2px solid #00d4ff;padding-bottom:20px;margin-bottom:24px;text-align:center">

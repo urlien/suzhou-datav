@@ -11,7 +11,6 @@ import { animateNumbers } from "./components/animation"
 import { initTimeline } from "./components/timeline"
 import { initComparison } from "./components/comparison"
 import { addKernelDensity, addStandardDeviationalEllipse, addAccessibilityAnalysis } from "./components/spatial-analysis"
-import { addBuildings, toggleBuildings } from "./components/buildings"
 import { initFilter } from "./components/filter"
 import { initRuralUrban } from "./components/rural-urban"
 import { initDataStory } from "./components/data-story"
@@ -19,7 +18,6 @@ import { fetchWeather, fetchAirQuality, renderWeatherPanel } from "./components/
 import { initDataAnnotations } from "./components/data-annotation"
 import { initRuralUrbanIndex } from "./components/rural-urban-index"
 import { exportPDF } from "./components/pdf-export"
-import { resolveTerrainMode } from "./utils/terrain-mode"
 import { addLandcover } from "./components/landcover"
 import { addRoadNight, setRoadNightVisible } from "./components/road-night"
 import "./style.css"
@@ -30,12 +28,10 @@ async function main() {
   addHeatmap(scene)
   toggleHeatmap(scene)
   addFlyingLines(scene)
-  toggleFlyingLines(scene)
 
-  // 并行加载行政边界与3D建筑数据，缩短首屏等待时间
+  // 并行加载地图图层；建筑白膜待数据重建后再接入。
   await Promise.all([
     addBoundary(scene),
-    addBuildings(scene),
     addLandcover(scene).catch(err => console.warn('[Landcover] 加载失败:', err)),
     addRoadNight(scene).catch(err => {
       document.querySelector('[data-layer="roads"]')?.classList.remove('active')
@@ -97,7 +93,6 @@ async function main() {
   }
   syncLegendVisibility()
   if (toolbar) {
-    if (resolveTerrainMode() === "registration") toolbar.querySelector('[data-layer="buildings"]')?.classList.remove("active")
     toolbar.querySelectorAll("button[data-layer]").forEach(btn => {
       btn.addEventListener("click", () => {
         const layer = btn.getAttribute("data-layer")
@@ -119,9 +114,6 @@ async function main() {
           const visible = toggleHeatmap(scene)
           btn.classList.toggle("active", visible)
           syncLegendVisibility()
-        } else if (layer === "buildings") {
-          const visible = toggleBuildings(scene)
-          btn.classList.toggle("active", visible)
         } else if (layer === "roads") {
           const active = btn.classList.toggle('active')
           const visible = setRoadNightVisible(scene, active)
@@ -145,14 +137,20 @@ async function main() {
     logistics: 2,
     economic: 3,
   }
-  toolbar?.querySelectorAll("button[data-flying]").forEach(btn => {
+  const flyingToolbar = document.getElementById('flying-toolbar')
+  flyingToolbar?.querySelectorAll<HTMLButtonElement>("button[data-flying]").forEach(btn => {
     btn.addEventListener("click", () => {
       const systemName = btn.getAttribute("data-flying")!
       const index = flyingSystemMap[systemName]
       if (index !== undefined) {
-        switchFlyingLineSystem(scene, index)
-        toolbar?.querySelectorAll("button[data-flying]").forEach(b => b.classList.remove("active"))
-        btn.classList.add("active")
+        const wasActive = btn.classList.contains('active')
+        if (wasActive) toggleFlyingLines(scene)
+        else switchFlyingLineSystem(scene, index)
+        flyingToolbar.querySelectorAll<HTMLButtonElement>("button[data-flying]").forEach(button => {
+          const selected = button === btn && !wasActive
+          button.classList.toggle('active', selected)
+          button.setAttribute('aria-pressed', String(selected))
+        })
       }
     })
   })
