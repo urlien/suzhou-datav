@@ -12,6 +12,11 @@ interface DemData {
 
 type FrameCallback = (time: number, deltaTime: number) => void
 const frameCallbacks: FrameCallback[] = []
+let snapshotMapImage: (() => string) | null = null
+
+export function captureMapImage(): string {
+  return snapshotMapImage?.() || ''
+}
 
 export function registerFrameCallback(cb: FrameCallback) {
   frameCallbacks.push(cb)
@@ -72,10 +77,14 @@ export async function initScene(): Promise<THREE.Scene> {
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    preserveDrawingBuffer: true, // 允许 canvas.toDataURL 正常导出截图
+    preserveDrawingBuffer: false,
   })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
   renderer.setSize(container.clientWidth, container.clientHeight, false)
+  snapshotMapImage = () => {
+    renderer.render(scene, camera)
+    return canvas.toDataURL('image/png')
+  }
 
   // 亮色光照照亮地形，但背景保持暗色
   const ambientLight = new THREE.AmbientLight(0xffffff, 1.25)
@@ -351,11 +360,14 @@ export async function initScene(): Promise<THREE.Scene> {
 
   entranceStart = performance.now()
   let lastTime = performance.now()
+  let lastFrame = 0
 
   function animate() {
     requestAnimationFrame(animate)
 
     const now = performance.now()
+    if (now - lastFrame < 1000 / 45) return
+    lastFrame = now
     const timeSec = now * 0.001
     const deltaSec = Math.min((now - lastTime) * 0.001, 0.1)
     lastTime = now

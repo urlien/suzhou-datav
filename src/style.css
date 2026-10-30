@@ -1214,7 +1214,7 @@ body {
   border: 1px solid rgba(105, 164, 183, .4);
   border-radius: 11px;
   box-shadow: 0 14px 48px rgba(0, 5, 12, .38);
-  backdrop-filter: blur(13px);
+  backdrop-filter: none;
   scrollbar-color: rgba(113, 170, 188, .55) transparent;
 }
 #left-panel { left: 20px; }
@@ -1251,6 +1251,16 @@ body {
 .stat-value { color: #a9e0ec; font-size: 15px; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; font-variant-numeric: tabular-nums; }
 .stat-label { font-size: 11px; line-height: 1.35; }
 #toolbar { top: 129px; left: calc(clamp(246px, 16vw, 300px) + 37px); right: calc(clamp(246px, 16vw, 300px) + 37px); max-width: none; justify-content: center; background: rgba(7, 23, 35, .79); }
+#flying-toolbar {
+  position: absolute; bottom: 151px;
+  left: calc(clamp(246px, 16vw, 300px) + 37px);
+  right: calc(clamp(246px, 16vw, 300px) + 37px);
+  z-index: 120; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 7px; padding: 7px 10px; border: 1px solid rgba(105, 164, 183, .48);
+  border-radius: 8px; background: rgba(7, 23, 35, .87);
+}
+#flying-toolbar .tool-btn { font-size: 12px; min-height: 31px; padding: 5px 12px; }
+#flying-toolbar .toolbar-label:last-child { color: #a9c0c8; }
 #spatial-toolbar { top: 183px; left: calc(clamp(246px, 16vw, 300px) + 37px); background: rgba(7, 23, 35, .79); }
 #map-scale { top: auto; bottom: 98px; left: calc(clamp(246px, 16vw, 300px) + 37px); background: rgba(7, 23, 35, .79); }
 #export-container { left: 50%; bottom: 45px; transform: translateX(-50%); width: max-content; max-width: calc(100% - 660px); justify-content: center; background: rgba(7, 23, 35, .88); }
@@ -1286,8 +1296,10 @@ body {
   .panel { position: relative; inset: auto; width: auto; max-height: none; margin: 12px; backdrop-filter: none; }
   #left-panel, #right-panel { left: auto; right: auto; }
   #toolbar { top: 12px; left: 12px; right: 12px; max-height: 90px; overflow: auto; }
+  #flying-toolbar { top: 195px; bottom: auto; left: 12px; right: 12px; justify-content: flex-start; }
+  #flying-toolbar .toolbar-label:last-child { display: none; }
   #spatial-toolbar { top: 108px; left: 12px; }
-  #map-scale { top: 148px; bottom: auto; left: 12px; }
+  #map-scale { top: 151px; bottom: auto; left: 12px; }
   #export-container { left: 12px; right: 12px; bottom: 12px; transform: none; width: auto; max-width: none; }
   #legend { right: 12px; bottom: 88px; }
   #terrain-info { left: 12px; bottom: 100px; }
