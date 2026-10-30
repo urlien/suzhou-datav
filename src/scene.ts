@@ -21,10 +21,10 @@ let entranceStart = 0
 let dragMoved = false
 let cameraTarget = new THREE.Vector3(0, 8, 0)
 let desiredTarget = new THREE.Vector3(0, 8, 0)
-let currentDist = 210
-let desiredDist = 210
-let rotY = 0.3
-let rotX = 0.55
+let currentDist = 118
+let desiredDist = 118
+let rotY = 0.18
+let rotX = 0.78
 
 export function startEntranceAnimation() {
   entranceStart = performance.now()
@@ -45,9 +45,9 @@ export function flyCameraTo(x: number, z: number, zoomDist = 135) {
 
 export function resetCameraView() {
   desiredTarget.set(0, 8, 0)
-  desiredDist = 210
-  rotY = 0.3
-  rotX = 0.55
+  desiredDist = 118
+  rotY = 0.18
+  rotX = 0.78
 }
 
 export function setMapViewDistance(distance: number) {
@@ -370,7 +370,7 @@ export async function initScene(): Promise<THREE.Scene> {
     cameraTarget.lerp(desiredTarget, dampFactor)
     currentDist += (desiredDist - currentDist) * dampFactor
 
-    const viewLevel = desiredDist > 155 ? 'city' : desiredDist > 82 ? 'region' : 'near'
+    const viewLevel = desiredDist > 105 ? 'city' : desiredDist > 70 ? 'region' : 'near'
     document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
       const selected = button.dataset.viewLevel === viewLevel
       button.classList.toggle('active', selected)
