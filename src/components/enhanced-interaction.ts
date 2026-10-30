@@ -1,6 +1,6 @@
 // 增强交互模块 - 基于 Raycaster 精确多边形拾取 + 区县点击下钻弹窗 + 相机飞行联动
 import * as THREE from 'three'
-import { areaData, districtDetails, gdpData, getDistrictDetail, populationData, type DistrictDetailInfo } from '../data/official-stats'
+import { areaData, districtDetails, gdpData, gdpYearData, getDistrictDetail, populationData, populationYearData, verifiedDistrictBulletins, type DistrictDetailInfo } from '../data/official-stats'
 import { districtPlanningNotes, districtPlanningSource, gusuHeritageSource } from '../data/planning-narratives'
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, normalizeDistrictName } from '../utils/geo'
 import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
@@ -153,18 +153,24 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
   const realGdp = gdpData[name] || d.gdp
   const realArea = areaData[name] || d.area
   const realDensity = realArea > 0 ? Math.round((realPop * 10000) / realArea) : d.density
+  const populationYear = populationYearData[name]
+  const gdpYear = gdpYearData[name]
+  const districtBulletin = verifiedDistrictBulletins[name]
+  const densityText = populationYear === 2025 ? `${realDensity}人/km²` : '—'
+  const gdpPerCapitaText = populationYear === gdpYear && realPop > 0 ? `${((realGdp / realPop) * 10000).toFixed(0)}元` : '—'
 
   return `
     <div style="padding:16px;color:var(--text);font-family:'Segoe UI','PingFang SC',sans-serif">
       <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;text-align:right">统计指标年份与来源待逐项核验；当前数值请勿直接用于同年比较</div>
+      ${districtBulletin ? `<div style="font-size:11px;margin-bottom:12px"><a href="${districtBulletin}" target="_blank" rel="noopener noreferrer">已核对的2025年区县统计公报 ↗</a></div>` : ''}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div class="detail-card">
-          <div class="detail-label">常住人口</div>
+          <div class="detail-label">常住人口（${populationYear}年末）</div>
           <div class="detail-value" style="color:${d.color}">${realPop}万</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">GDP</div>
+          <div class="detail-label">GDP（${gdpYear}年）</div>
           <div class="detail-value" style="color:${d.color}">${realGdp}亿</div>
         </div>
         <div class="detail-card">
@@ -172,16 +178,16 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
           <div class="detail-value">${realArea}km²</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">人口密度</div>
-          <div class="detail-value">${realDensity}人/km²</div>
+          <div class="detail-label">人口密度（人口与面积同为2025年时估算）</div>
+          <div class="detail-value">${densityText}</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">人均可支配收入</div>
+          <div class="detail-label">人均可支配收入（待核验）</div>
           <div class="detail-value">${(d.income / 10000).toFixed(2)}万</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">人均GDP</div>
-          <div class="detail-value">${realPop > 0 ? ((realGdp / realPop) * 10000).toFixed(0) : 0}元</div>
+          <div class="detail-label">人均GDP（同年人口与GDP时估算）</div>
+          <div class="detail-value">${gdpPerCapitaText}</div>
         </div>
       </div>
 
@@ -211,5 +217,6 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
     </div>
   `
 }
+
 
 

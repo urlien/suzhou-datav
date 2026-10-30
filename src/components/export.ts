@@ -1,5 +1,5 @@
 // 数据导出功能；区县数据混合年份，逐项来源尚待核验。
-import { getDistrictData } from '../data/official-stats'
+import { gdpYearData, getDistrictData, populationYearData, verifiedDistrictBulletins } from '../data/official-stats'
 
 export function initExport() {
   const exportPngBtn = document.getElementById('export-png')
@@ -25,19 +25,18 @@ function exportAsPng() {
 
 function exportAsCsv() {
   const districts = getDistrictData()
-  const population2025 = new Set(['相城区', '虎丘区', '吴江区'])
-  const gdp2025 = new Set(['吴中区', '相城区', '虎丘区', '吴江区'])
   const rows: string[][] = [
-    ['区县', 'GDP(亿元)', 'GDP年份', '常住人口(万人)', '人口年份', '面积(km²)', '面积标注年份', '核验状态'],
+    ['区县', 'GDP(亿元)', 'GDP年份', '常住人口(万人)', '人口年份', '面积(km²)', '面积标注年份', '2025年公报链接', '核验状态'],
     ...districts.map(d => [
       d.name,
       d.gdp.toFixed(2),
-      gdp2025.has(d.name) ? '2025' : '2024',
+      String(gdpYearData[d.name]),
       d.population.toFixed(2),
-      population2025.has(d.name) ? '2025' : '2023',
+      String(populationYearData[d.name]),
       d.area.toFixed(2),
       '2025',
-      '逐项来源待核验',
+      verifiedDistrictBulletins[d.name] || '',
+      verifiedDistrictBulletins[d.name] ? 'GDP已核对；人口仅在公报披露时核对；面积待核验' : '逐项来源待核验',
     ]),
   ]
 
@@ -50,4 +49,5 @@ function exportAsCsv() {
   link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
 
