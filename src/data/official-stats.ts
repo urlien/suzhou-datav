@@ -4,7 +4,7 @@
 
 import { normalizeDistrictName } from '../utils/geo'
 
-// 面积数据（单位：km²，2025年末）
+// 面积底稿（单位：km²，年份与边界口径尚未逐项核验）
 export const areaData: Record<string, number> = {
   '姑苏区': 83.42,
   '吴中区': 2231.69,
@@ -21,13 +21,13 @@ export const areaData: Record<string, number> = {
 
 // 常住人口数据（单位：万人）
 export const populationData: Record<string, number> = {
-  '姑苏区': 92.61,        // 2023年末
+  '姑苏区': 92.28,        // 2025年末，姑苏区统计公报
   '吴中区': 141.14,       // 2023年末
-  '相城区': 91.96,        // 2025年末
+  '相城区': 91.96,        // 年份与口径待核；政府概览另有不同数值
   '虎丘区': 86.16,        // 2025年末
   '苏州工业园区': 116.99, // 2023年末
   '工业园区': 116.99,
-  '吴江区': 158.00,       // 2025年末
+  '吴江区': 158.00,       // 原底稿年份待核；2025年公报只披露户籍人口
   '常熟市': 168.35,       // 2025年末，常熟市统计公报
   '张家港市': 144.20,     // 2025年末，张家港市统计公报
   '昆山市': 214.85,       // 2023年末
@@ -36,37 +36,42 @@ export const populationData: Record<string, number> = {
 
 // GDP数据（单位：亿元）
 export const gdpData: Record<string, number> = {
-  '姑苏区': 1014.33,      // 2024年
+  '姑苏区': 1047.95,      // 2025年
   '吴中区': 2073.26,      // 2025年
   '相城区': 1430.81,      // 2025年
   '虎丘区': 1976.70,      // 2025年
-  '苏州工业园区': 4002.43,// 2024年
-  '工业园区': 4002.43,
-  '吴江区': 2763.00,      // 2025年
+  '苏州工业园区': 4163.10,// 2025年，园区官方简介
+  '工业园区': 4163.10,
+  '吴江区': 2762.87,      // 2025年
   '常熟市': 3210.73,      // 2025年
   '张家港市': 3478.68,    // 2025年
   '昆山市': 5615.34,      // 2025年
   '太仓市': 1935.66,      // 2025年
 }
 
-export const populationYearData: Record<string, number> = {
-  '姑苏区': 2023, '吴中区': 2023, '相城区': 2025, '虎丘区': 2025,
-  '苏州工业园区': 2023, '工业园区': 2023, '吴江区': 2025,
+export const populationYearData: Record<string, number | null> = {
+  '姑苏区': 2025, '吴中区': 2023, '相城区': null, '虎丘区': 2025,
+  '苏州工业园区': 2023, '工业园区': 2023, '吴江区': null,
   '常熟市': 2025, '张家港市': 2025, '昆山市': 2023, '太仓市': 2025,
 }
 
 export const gdpYearData: Record<string, number> = {
-  '姑苏区': 2024, '吴中区': 2025, '相城区': 2025, '虎丘区': 2025,
-  '苏州工业园区': 2024, '工业园区': 2024, '吴江区': 2025,
+  '姑苏区': 2025, '吴中区': 2025, '相城区': 2025, '虎丘区': 2025,
+  '苏州工业园区': 2025, '工业园区': 2025, '吴江区': 2025,
   '常熟市': 2025, '张家港市': 2025, '昆山市': 2025, '太仓市': 2025,
 }
 
-// 已逐项打开并核对 2025 年公报的区县；未列出的区县仍需回查原始公报。
-export const verifiedDistrictBulletins: Record<string, string> = {
-  '常熟市': 'https://www.changshu.gov.cn/zgcs/c100357/202606/511810bbc19c41f0815f71aab71a2f79.shtml',
-  '张家港市': 'https://www.zjg.gov.cn/zjgszwz/gmjjfb/202607/6bceb289ec0040629a481241c11f55a2.shtml',
-  '昆山市': 'https://www.ks.gov.cn/kss/tjfx/202605/319700b1bdda44ecb0c30584163e79fc.shtml',
-  '太仓市': 'https://www.taicang.gov.cn/taicang/tjgb/202605/f89bf160b4224558be13d1bf1f71ae56.shtml',
+// 只标记在原文中逐项核对过的指标；来源类型与人口口径不能由链接存在与否推断。
+export const verifiedDistrictSources: Record<string, { url: string; label: string; gdp: boolean; population: boolean }> = {
+  '姑苏区': { url: 'https://www.gusu.gov.cn/gsq/c100257/202605/8e7651a52216473282fca2ca2204506a.shtml', label: '2025年统计公报', gdp: true, population: true },
+  '虎丘区': { url: 'https://www.suzhou.gov.cn/szsrmzf/ndgmjjhshfztjsjfb/202607/d5d9e36c1e7940349b122adbb3923971.shtml', label: '2025年统计公报', gdp: true, population: true },
+  '苏州工业园区': { url: 'https://www.sipac.gov.cn/szgyyq/yqjjfz/parkProfile.shtml', label: '园区官方简介', gdp: true, population: false },
+  '工业园区': { url: 'https://www.sipac.gov.cn/szgyyq/yqjjfz/parkProfile.shtml', label: '园区官方简介', gdp: true, population: false },
+  '吴江区': { url: 'https://www.wujiang.gov.cn/zgwj/tjsj1/202608/c0a4af311bfa4f2c815b0e4417c68efa.shtml', label: '2025年统计公报', gdp: true, population: false },
+  '常熟市': { url: 'https://www.changshu.gov.cn/zgcs/c100357/202606/511810bbc19c41f0815f71aab71a2f79.shtml', label: '2025年统计公报', gdp: true, population: true },
+  '张家港市': { url: 'https://www.zjg.gov.cn/zjgszwz/gmjjfb/202607/6bceb289ec0040629a481241c11f55a2.shtml', label: '2025年统计公报', gdp: true, population: true },
+  '昆山市': { url: 'https://www.ks.gov.cn/kss/tjfx/202605/319700b1bdda44ecb0c30584163e79fc.shtml', label: '2025年统计公报', gdp: true, population: false },
+  '太仓市': { url: 'https://www.taicang.gov.cn/taicang/tjgb/202605/f89bf160b4224558be13d1bf1f71ae56.shtml', label: '2025年统计公报', gdp: true, population: true },
 }
 
 // 2019-2025 历年 GDP 趋势（单位：亿元）
@@ -307,35 +312,31 @@ export function getDistrictData(): DistrictData[] {
 网址：https://www.suzhou.gov.cn
 
 【常住人口数据】
-- 姑苏区、吴中区、苏州工业园区、昆山市：2023年末数据，原始表待逐项核对
+- 吴中区、苏州工业园区、昆山市：2023年末数据，原始表待逐项核对
   来源：《苏州统计年鉴-2024》及各区县2023年统计公报
   
-- 相城区、虎丘区（高新区）、吴江区：2025年末数据，原始表待逐项核对
-  来源：各区县2025年统计公报/快报
+- 相城区、吴江区：原底稿年份与人口口径未核实，不能标为2025年末常住人口
+  原有来源线索待回查：
   - 相城区：http://www.szxc.gov.cn
   - 虎丘区：http://www.snd.gov.cn
   - 吴江区：http://www.zgwj.gov.cn
 
-- 常熟市 168.35 万人、张家港市 144.20 万人、太仓市 84.92 万人：2025年末数据
-  来源：对应政府网站的2025年国民经济和社会发展统计公报；直链见 verifiedDistrictBulletins。
+- 姑苏区、虎丘区、常熟市、张家港市、太仓市：2025年末人口已在公报中核对。
+  直链见 verifiedDistrictSources。
 
 【GDP数据】
-- 姑苏区、苏州工业园区：2024年数据，原始表待逐项核对
-  来源：各区县2024年统计公报
-  
-- 吴中区、相城区、虎丘区、吴江区：2025年数据，原始表待逐项核对
+- 吴中区、相城区：2025年数据，原始表待逐项核对
   来源：各区县2025年统计公报/快报
   - 吴中区：http://www.szwz.gov.cn
   - 相城区：http://www.szxc.gov.cn
-  - 虎丘区：http://www.snd.gov.cn
-  - 吴江区：http://www.zgwj.gov.cn
   
-- 常熟市 3210.73 亿元、张家港市 3478.68 亿元、昆山市 5615.34 亿元、太仓市 1935.66 亿元：2025年数据
-  来源：对应政府网站的2025年国民经济和社会发展统计公报；直链见 verifiedDistrictBulletins。
+- 姑苏区、虎丘区、苏州工业园区、吴江区、常熟市、张家港市、昆山市、太仓市：2025年 GDP 已在政府原文中核对。
+  直链见 verifiedDistrictSources；园区引用官方简介，其余引用统计公报。
 
 【特别说明】
 虎丘区与高新区为"一套班子、两块牌子"，官方统计口径统一。
 面积采用332.37 km²（政府官网口径），与百度百科（223.36 km²）不同。
 */
+
 
 
