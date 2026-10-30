@@ -21,6 +21,7 @@ import { initRuralUrbanIndex } from "./components/rural-urban-index"
 import { exportPDF } from "./components/pdf-export"
 import { resolveTerrainMode } from "./utils/terrain-mode"
 import { addLandcover } from "./components/landcover"
+import { addRoadNight, setRoadNightVisible } from "./components/road-night"
 import "./style.css"
 import "./print.css"
 
@@ -35,8 +36,14 @@ async function main() {
   await Promise.all([
     addBoundary(scene),
     addBuildings(scene),
-    addLandcover(scene).catch(err => console.warn('[Landcover] 加载失败:', err))
+    addLandcover(scene).catch(err => console.warn('[Landcover] 加载失败:', err)),
+    addRoadNight(scene).catch(err => {
+      document.querySelector('[data-layer="roads"]')?.classList.remove('active')
+      document.getElementById('night-map-note')?.setAttribute('hidden', '')
+      console.warn('[Road night] 道路纹理加载失败:', err)
+    })
   ])
+  setRoadNightVisible(scene, Boolean(scene.getObjectByName('road-night-group')))
 
   initCharts()
   initSearch()
@@ -99,9 +106,12 @@ async function main() {
           const terrain = scene.getObjectByName("terrain")
           const grid = scene.getObjectByName("grid-helper")
           const landcover = scene.getObjectByName("landcover")
+          const roadNight = scene.getObjectByName("road-night-group")
           if (terrain) terrain.visible = isActive
           if (grid) grid.visible = isActive
           if (landcover) landcover.visible = isActive && !!toolbar.querySelector('[data-layer="landcover"]')?.classList.contains('active')
+          setRoadNightVisible(scene, isActive && !!toolbar.querySelector('[data-layer="roads"]')?.classList.contains('active'))
+          document.getElementById('night-map-note')?.toggleAttribute('hidden', !roadNight?.visible)
         } else if (layer === "boundary") {
           const visible = toggleBoundary(scene)
           btn.classList.toggle("active", visible)
@@ -112,6 +122,11 @@ async function main() {
         } else if (layer === "buildings") {
           const visible = toggleBuildings(scene)
           btn.classList.toggle("active", visible)
+        } else if (layer === "roads") {
+          const active = btn.classList.toggle('active')
+          const visible = setRoadNightVisible(scene, active)
+          btn.setAttribute('aria-pressed', String(active))
+          document.getElementById('night-map-note')?.toggleAttribute('hidden', !visible)
         } else if (layer === "landcover") {
           const landcover = scene.getObjectByName('landcover')
           if (landcover) {

@@ -1,0 +1,35 @@
+{
+  "source": "OpenStreetMap contributors via Geofabrik Jiangsu 2026-10-30",
+  "source_url": "https://download.geofabrik.de/asia/china/jiangsu.html",
+  "license": "ODbL 1.0",
+  "source_archive_sha256": "2c594551a2fbce6a0e2a83f4ff1f3047d957fac04f007e1c817b7d8fa8f3d871",
+  "bounds": [
+    119.78,
+    30.66,
+    121.52,
+    32.14
+  ],
+  "texture_size": 4096,
+  "tile_edges": [
+    0,
+    1365,
+    2730,
+    4096
+  ],
+  "rendering": "Road positions and classes are mapped; colors and glow are illustrative, not measured night lighting or traffic.",
+  "road_segments_by_class": {
+    "motorway_link": 4207,
+    "motorway": 5679,
+    "secondary": 21613,
+    "primary": 20384,
+    "unclassified": 16103,
+    "tertiary": 33148,
+    "trunk": 5931,
+    "trunk_link": 4827,
+    "residential": 43427,
+    "living_street": 525,
+    "primary_link": 3753,
+    "secondary_link": 1638,
+    "tertiary_link": 673
+  }
+}

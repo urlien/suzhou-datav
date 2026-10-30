@@ -35,6 +35,6 @@ export async function addLandcover(scene: THREE.Scene) {
   const mesh = new THREE.Mesh(geometry, material)
   mesh.name = 'landcover'
   mesh.rotation.x = -Math.PI / 2
-  mesh.renderOrder = 1
+  mesh.renderOrder = 2
   scene.add(mesh)
 }
