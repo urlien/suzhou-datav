@@ -2,9 +2,9 @@ import * as THREE from "three"
 import { initScene, resetCameraView, setMapViewDistance, startEntranceAnimation, updateSceneTheme } from "./scene"
 import { initCharts, resizeAllCharts, updateChartsTheme } from "./components/charts"
 import { addHeatmap, toggleHeatmap } from "./components/heatmap"
-import { addFlyingLines, switchFlyingLineSystem } from "./components/flying-lines"
+import { addFlyingLines, switchFlyingLineSystem, toggleFlyingLines } from "./components/flying-lines"
 import { addBoundary, highlightDistrictBoundary, toggleBoundary } from "./components/boundary"
-import { setupEnhancedInteraction } from "./components/enhanced-interaction"
+import { openDistrictModal, setupEnhancedInteraction } from "./components/enhanced-interaction"
 import { initSearch } from "./components/search"
 import { initExport } from "./components/export"
 import { animateNumbers } from "./components/animation"
@@ -27,7 +27,9 @@ import "./print.css"
 async function main() {
   const scene = await initScene()
   addHeatmap(scene)
+  toggleHeatmap(scene)
   addFlyingLines(scene)
+  toggleFlyingLines(scene)
 
   // 并行加载行政边界与3D建筑数据，缩短首屏等待时间
   await Promise.all([
@@ -38,6 +40,15 @@ async function main() {
 
   initCharts()
   initSearch()
+  document.querySelectorAll<HTMLButtonElement>('.district-nav-item').forEach(button => {
+    button.addEventListener('click', () => {
+      const district = button.dataset.district
+      if (!district) return
+      document.querySelectorAll('.district-nav-item').forEach(item => item.classList.toggle('active', item === button))
+      openDistrictModal(district)
+    })
+  })
+  document.getElementById('featured-district')?.addEventListener('click', () => openDistrictModal('姑苏区'))
   initExport()
   initTimeline()
   initComparison()
@@ -64,13 +75,20 @@ async function main() {
 
   document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
     button.addEventListener('click', () => {
-      const distance = { city: 210, region: 110, near: 55 }[button.dataset.viewLevel || 'city']
+      const distance = { city: 118, region: 85, near: 55 }[button.dataset.viewLevel || 'city']
       if (distance) setMapViewDistance(distance)
     })
   })
 
   // 底部工具栏 - 4个图层切换（地形、行政边界、人口热力、3D建筑）
   const toolbar = document.getElementById("toolbar")
+  const legendEl = document.getElementById('legend')
+  const syncLegendVisibility = () => {
+    if (!legendEl) return
+    const visible = ['heatmap-group', 'kernel-density', 'accessibility-group'].some(name => scene.getObjectByName(name)?.visible)
+    legendEl.style.display = visible ? '' : 'none'
+  }
+  syncLegendVisibility()
   if (toolbar) {
     if (resolveTerrainMode() === "registration") toolbar.querySelector('[data-layer="buildings"]')?.classList.remove("active")
     toolbar.querySelectorAll("button[data-layer]").forEach(btn => {
@@ -90,6 +108,7 @@ async function main() {
         } else if (layer === "heatmap") {
           const visible = toggleHeatmap(scene)
           btn.classList.toggle("active", visible)
+          syncLegendVisibility()
         } else if (layer === "buildings") {
           const visible = toggleBuildings(scene)
           btn.classList.toggle("active", visible)
@@ -144,6 +163,7 @@ async function main() {
       btn.classList.add("active")
       if (legendTitleEl) legendTitleEl.textContent = "A级景区核密度"
     }
+    syncLegendVisibility()
   })
 
   document.getElementById("btn-ellipse")?.addEventListener("click", () => {
@@ -170,6 +190,7 @@ async function main() {
       btn.classList.add("active")
       if (legendTitleEl) legendTitleEl.textContent = "通行阻力模型（10~60分钟示意）"
     }
+    syncLegendVisibility()
   })
 
   // 底部综合分析抽屉（历年时间轴 / 区县对比 / 数据筛选）

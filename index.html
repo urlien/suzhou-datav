@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>苏州市数据可视化大屏</title>
+  <title>苏州 · 城市空间图谱</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
   <link rel="stylesheet" href="/src/style.css" />
 </head>
@@ -15,7 +15,7 @@
 
   <div id="app">
     <div id="header">
-      <h1>苏州市城乡数据可视化平台</h1>
+      <div class="brand"><h1>苏州 · 城市空间图谱</h1><p>探索地形、水系与城乡联系</p></div>
       <div id="search-container">
         <input type="text" id="search-input" placeholder="🔍 搜索区县、产业或亮点（如：昆山 / 工业园区）..." />
         <div id="search-results"></div>
@@ -26,6 +26,19 @@
     <div id="main">
       <!-- 左侧数据面板 -->
       <div id="left-panel" class="panel">
+        <div class="panel-title">行政区划 <span class="section-count">10 个展示单元</span></div>
+        <div id="district-nav" aria-label="选择区县">
+          <button type="button" class="district-nav-item" data-district="姑苏区">姑苏区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="苏州工业园区">工业园区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="虎丘区">高新区 · 虎丘区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="吴中区">吴中区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="相城区">相城区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="吴江区">吴江区 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="常熟市">常熟市 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="张家港市">张家港市 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="昆山市">昆山市 <span>›</span></button>
+          <button type="button" class="district-nav-item" data-district="太仓市">太仓市 <span>›</span></button>
+        </div>
         <div class="panel-title">📋 政策规划</div>
         <div class="policy-card">
           <div class="policy-title">城乡融合发展</div>
@@ -66,14 +79,6 @@
       <div id="canvas-container">
         <canvas id="canvas"></canvas>
 
-        <!-- 左上角核心指标卡 -->
-        <div id="stats">
-          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；初步核算"><div class="stat-value">27695.1亿</div><div class="stat-label">2025年GDP</div></div>
-          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；按不变价格计算"><div class="stat-value">5.4%</div><div class="stat-label">2025年GDP增速</div></div>
-          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；分母为规模以上工业总产值"><div class="stat-value">56.2%</div><div class="stat-label">高新技术产值占比</div></div>
-          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；三次产业结构"><div class="stat-value">52.9%</div><div class="stat-label">第三产业占比</div></div>
-        </div>
-
         <!-- 左上角空间分析按钮组（位于指标卡正下方，不遮挡左侧栏） -->
         <div id="spatial-toolbar">
           <span class="toolbar-label">空间分析：</span>
@@ -95,11 +100,11 @@
           <button class="tool-btn active" data-layer="terrain">地形</button>
           <button class="tool-btn active" data-layer="landcover" title="OpenStreetMap 已标注的水面与林地">水系林地</button>
           <button class="tool-btn active" data-layer="boundary">边界</button>
-          <button class="tool-btn active" data-layer="heatmap">热力</button>
+          <button class="tool-btn" data-layer="heatmap">热力</button>
           <button class="tool-btn active" data-layer="buildings">白膜</button>
           <div class="toolbar-divider"></div>
           <span class="toolbar-label">飞线：</span>
-          <button class="tool-btn active" data-flying="population" title="示意飞线，未接入实测人口流动数据">人口流动</button>
+          <button class="tool-btn" data-flying="population" title="示意飞线，未接入实测人口流动数据">人口流动</button>
           <button class="tool-btn" data-flying="transport" title="示意飞线，未接入实测交通流量数据">交通流量</button>
           <button class="tool-btn" data-flying="logistics" title="示意飞线，未接入实测物流货运数据">物流货运</button>
           <button class="tool-btn" data-flying="economic" title="示意飞线，未接入实测经济联系数据">经济联系</button>
@@ -159,6 +164,19 @@
 
       <!-- 右侧数据面板 -->
       <div id="right-panel" class="panel">
+        <div class="region-feature">
+          <span class="region-feature-kicker">区域导览</span>
+          <strong>姑苏区</strong>
+          <p>千年古城 · 江南文脉。以真实行政边界和可追溯资料为线索，进入区域详情。</p>
+          <button id="featured-district" type="button">查看区域资料 ↗</button>
+        </div>
+        <div class="panel-title">2025 全市概览</div>
+        <div id="stats">
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；初步核算"><div class="stat-value">27695.1亿</div><div class="stat-label">2025年GDP</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；按不变价格计算"><div class="stat-value">5.4%</div><div class="stat-label">2025年GDP增速</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；分母为规模以上工业总产值"><div class="stat-value">56.2%</div><div class="stat-label">高新技术产值占比</div></div>
+          <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；三次产业结构"><div class="stat-value">52.9%</div><div class="stat-label">第三产业占比</div></div>
+        </div>
         <div class="panel-title">🌤️ 实时天气与空气质量</div>
         <div id="weather-panel" class="weather-container"></div>
 
