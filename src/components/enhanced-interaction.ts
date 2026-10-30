@@ -26,7 +26,10 @@ export function openDistrictModal(rawName: string) {
 
   if (modalHeader) modalHeader.textContent = canonicalName
   modalBody.innerHTML = renderDistrictDetail(canonicalName, detail)
-  modal.style.display = 'flex' // 保持 Flex 居中，避免贴在左上角
+  modal.style.display = 'flex'
+  document.querySelectorAll<HTMLButtonElement>('.district-nav-item').forEach(button => {
+    button.classList.toggle('active', button.dataset.district === canonicalName)
+  })
 
   const center = districtCenters[canonicalName]
   if (center) {
@@ -55,6 +58,7 @@ export function setupEnhancedInteraction(
 
   const closeModal = () => {
     modal.style.display = 'none'
+    document.querySelectorAll('.district-nav-item').forEach(button => button.classList.remove('active'))
     highlightDistrictBoundary(scene, null)
     resetCameraView()
   }
@@ -141,7 +145,6 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
   const subDistrictsHtml = d.subDistricts?.map(sd => `
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
       <span>${sd.name}</span>
-      <span>${sd.population}万人 | ${sd.gdp}亿</span>
     </div>
   `).join('') || ''
 
@@ -203,7 +206,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
 
       ${d.subDistricts ? `
         <div style="margin-bottom:16px">
-          <div style="font-size:13px;color:var(--accent);margin-bottom:8px">📍 重点下辖板块 / 镇街</div>
+          <div style="font-size:13px;color:var(--accent);margin-bottom:8px">区内板块 / 镇街（展示线索）</div>
           ${subDistrictsHtml}
         </div>
       ` : ''}
