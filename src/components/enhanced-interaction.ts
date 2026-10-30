@@ -1,6 +1,6 @@
 // 增强交互模块 - 基于 Raycaster 精确多边形拾取 + 区县点击下钻弹窗 + 相机飞行联动
 import * as THREE from 'three'
-import { areaData, districtDetails, gdpData, gdpYearData, getDistrictDetail, populationData, populationYearData, verifiedDistrictBulletins, type DistrictDetailInfo } from '../data/official-stats'
+import { areaData, districtDetails, gdpData, gdpYearData, getDistrictDetail, populationData, populationYearData, verifiedDistrictSources, type DistrictDetailInfo } from '../data/official-stats'
 import { districtPlanningNotes, districtPlanningSource, gusuHeritageSource } from '../data/planning-narratives'
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, normalizeDistrictName } from '../utils/geo'
 import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
@@ -101,7 +101,7 @@ export function setupEnhancedInteraction(
         const realArea = areaData[pickedName] || detail.area
         infoEl.innerHTML = `
           <strong style="color:${detail.color};font-size:13px">${pickedName}</strong><br>
-          常住人口: <b>${realPop}万</b> | GDP: <b>${realGdp}亿</b> | 面积: <b>${realArea}km²</b><br>
+          常住人口: <b>${realPop}万（${populationYearData[pickedName] ? `${populationYearData[pickedName]}年` : '年份待核'}）</b> | GDP: <b>${realGdp}亿（${gdpYearData[pickedName]}年）</b> | 面积: <b>${realArea}km²（待核）</b><br>
           <span style="color:var(--text-dim)">${detail.desc}</span><br>
           <span style="color:var(--accent);font-size:11px">点击查看下钻详情 · 双击画布或点击复位键恢复视角 →</span>
         `
@@ -155,18 +155,18 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
   const realDensity = realArea > 0 ? Math.round((realPop * 10000) / realArea) : d.density
   const populationYear = populationYearData[name]
   const gdpYear = gdpYearData[name]
-  const districtBulletin = verifiedDistrictBulletins[name]
-  const densityText = populationYear === 2025 ? `${realDensity}人/km²` : '—'
-  const gdpPerCapitaText = populationYear === gdpYear && realPop > 0 ? `${((realGdp / realPop) * 10000).toFixed(0)}元` : '—'
+  const districtSource = verifiedDistrictSources[name]
+  const densityText = populationYear === 2025 && districtSource?.population ? `${realDensity}人/km²` : '—'
+  const gdpPerCapitaText = populationYear === gdpYear && districtSource?.gdp && districtSource.population && realPop > 0 ? `${((realGdp / realPop) * 10000).toFixed(0)}元` : '—'
 
   return `
     <div style="padding:16px;color:var(--text);font-family:'Segoe UI','PingFang SC',sans-serif">
       <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;text-align:right">统计指标年份与来源待逐项核验；当前数值请勿直接用于同年比较</div>
-      ${districtBulletin ? `<div style="font-size:11px;margin-bottom:12px"><a href="${districtBulletin}" target="_blank" rel="noopener noreferrer">已核对的2025年区县统计公报 ↗</a></div>` : ''}
+      ${districtSource ? `<div style="font-size:11px;margin-bottom:12px"><a href="${districtSource.url}" target="_blank" rel="noopener noreferrer">${districtSource.label}（${districtSource.gdp ? 'GDP' : ''}${districtSource.gdp && districtSource.population ? '、' : ''}${districtSource.population ? '常住人口' : ''}已核）↗</a></div>` : ''}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div class="detail-card">
-          <div class="detail-label">常住人口（${populationYear}年末）</div>
+            <div class="detail-label">常住人口（${populationYear ? `${populationYear}年末` : '年份待核'}）</div>
           <div class="detail-value" style="color:${d.color}">${realPop}万</div>
         </div>
         <div class="detail-card">
@@ -178,7 +178,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
           <div class="detail-value">${realArea}km²</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">人口密度（人口与面积同为2025年时估算）</div>
+            <div class="detail-label">人口密度（人口已核、面积待核的估算）</div>
           <div class="detail-value">${densityText}</div>
         </div>
         <div class="detail-card">
@@ -186,7 +186,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
           <div class="detail-value">${(d.income / 10000).toFixed(2)}万</div>
         </div>
         <div class="detail-card">
-          <div class="detail-label">人均GDP（同年人口与GDP时估算）</div>
+            <div class="detail-label">人均GDP（同年两项均已核时估算）</div>
           <div class="detail-value">${gdpPerCapitaText}</div>
         </div>
       </div>
@@ -217,6 +217,7 @@ function renderDistrictDetail(name: string, d: DistrictDetailInfo): string {
     </div>
   `
 }
+
 
 
 
