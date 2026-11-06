@@ -10,5 +10,25 @@ export function reachableNetwork(elements, origin, minutes, speed=80) {
  const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][0]<heap[c][0])c++;if(heap[c][0]>=last[0])break;heap[i]=heap[c];i=c}heap[i]=last}return first};
  while(heap.length){const [time,id]=pop();if(time!==times.get(id)||time>minutes)continue;for(const e of graph.get(id)||[]){const next=time+e.cost;if(next<=minutes&&next<(times.get(e.b)??Infinity)){times.set(e.b,next);push([next,e.b])}}}
  const segments=[];for(const e of edges){const t=times.get(e.a);if(t===undefined||t>=minutes)continue;const fraction=Math.min(1,(minutes-t)/e.cost);segments.push({coordinates:[e.pa,[e.pa[0]+(e.pb[0]-e.pa[0])*fraction,e.pa[1]+(e.pb[1]-e.pa[1])*fraction]],startMinutes:t,endMinutes:Math.min(minutes,t+e.cost)})}
- return {segments,snapMeters:Math.round(snap),nodeCount:nodes.size,edgeCount:edges.length,reachedNodes:times.size,origin,snappedOrigin:nodes.get(start),minutes,speedKmh:speed*60/1000};
+ const categories = {hospital:'health',clinic:'health',doctors:'health',pharmacy:'health',
+   school:'education',kindergarten:'education',college:'education',university:'education'};
+ const facilities = new Map();
+ for (const element of elements) {
+   const tags = element.tags || {};
+   const category = categories[tags.amenity] || categories[tags.healthcare];
+   if (!category || !tags.name) continue;
+   const ids = element.type === 'node' ? [element.id] : element.type === 'way' ? element.nodes : [];
+   for (const sample of ids.map(id => nodes.get(id)).filter(Boolean)) {
+     for (const [id, time] of times) {
+       const gap = distance(sample, nodes.get(id));
+       const arrival = time + gap / speed;
+       if (gap > 45 || arrival > minutes) continue;
+       const key = category + ':' + tags.name;
+       if (arrival < (facilities.get(key)?.arrival ?? Infinity)) {
+         facilities.set(key,{name:tags.name,category,coordinates:sample,minutes:Math.ceil(arrival),arrival});
+       }
+     }
+   }
+ }
+ return {segments,facilities:[...facilities.values()].sort((a,b)=>a.arrival-b.arrival),snapMeters:Math.round(snap),nodeCount:nodes.size,edgeCount:edges.length,reachedNodes:times.size,origin,snappedOrigin:nodes.get(start),minutes,speedKmh:speed*60/1000};
 }

@@ -1,0 +1,72 @@
+[
+  {
+    "name": "姑苏区",
+    "destination": "姑苏区人民政府",
+    "minutes": 9,
+    "km": 2.7,
+    "queriedAt": "2026-11-06T14:48:25.991Z"
+  },
+  {
+    "name": "吴中区",
+    "destination": "吴中区人民政府",
+    "minutes": 29,
+    "km": 17.2,
+    "queriedAt": "2026-11-06T14:48:25.526Z"
+  },
+  {
+    "name": "相城区",
+    "destination": "相城区人民政府",
+    "minutes": 16,
+    "km": 7.3,
+    "queriedAt": "2026-11-06T14:48:25.059Z"
+  },
+  {
+    "name": "虎丘区",
+    "destination": "苏州高新区管委会",
+    "minutes": 26,
+    "km": 22.5,
+    "queriedAt": "2026-11-06T14:48:27.815Z"
+  },
+  {
+    "name": "苏州工业园区",
+    "destination": "苏州工业园区管理委员会",
+    "minutes": 22,
+    "km": 13.9,
+    "queriedAt": "2026-11-06T14:48:28.268Z"
+  },
+  {
+    "name": "吴江区",
+    "destination": "吴江区人民政府",
+    "minutes": 41,
+    "km": 28.2,
+    "queriedAt": "2026-11-06T14:48:28.747Z"
+  },
+  {
+    "name": "常熟市",
+    "destination": "常熟市人民政府",
+    "minutes": 48,
+    "km": 49.2,
+    "queriedAt": "2026-11-06T14:48:30.546Z"
+  },
+  {
+    "name": "张家港市",
+    "destination": "张家港市人民政府",
+    "minutes": 73,
+    "km": 77.0,
+    "queriedAt": "2026-11-06T14:48:31.009Z"
+  },
+  {
+    "name": "昆山市",
+    "destination": "昆山市人民政府",
+    "minutes": 50,
+    "km": 38.0,
+    "queriedAt": "2026-11-06T14:48:31.476Z"
+  },
+  {
+    "name": "太仓市",
+    "destination": "太仓市人民政府",
+    "minutes": 60,
+    "km": 70.3,
+    "queriedAt": "2026-11-06T14:48:32.391Z"
+  }
+]

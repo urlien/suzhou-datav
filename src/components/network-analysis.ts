@@ -1,44 +1,285 @@
-import type * as THREE from 'three'
-import { flyCameraTo } from '../scene'
-import { getDistrictCoords, geoTo3D } from '../utils/geo'
+import * as THREE from 'three'
+import { flyCameraTo, resetCameraView, wasCanvasDragged } from '../scene'
+import { BOUNDS, geoTo3D, getDistrictCoords, getTerrainHeightAtXZ } from '../utils/geo'
 
-const counties = ['姑苏区','吴中区','相城区','虎丘区','苏州工业园区','吴江区','常熟市','张家港市','昆山市','太仓市']
-const towns = ['昆山市周庄镇人民政府','昆山市千灯镇人民政府','吴江区同里镇人民政府','吴江区震泽镇人民政府','吴中区甪直镇人民政府','吴中区东山镇人民政府','相城区黄埭镇人民政府','常熟市沙家浜镇人民政府','张家港市金港街道办事处','太仓市沙溪镇人民政府']
-type Route = {origin:string; destination:string; distance:string; duration:string; steps:{polyline:string;instruction:string}[];queriedAt:string}
-function node(tag:string,text='') { const el=document.createElement(tag);el.textContent=text;return el }
-function mapLines(routes:Route[]) {
- const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 330');svg.setAttribute('role','img');svg.setAttribute('aria-label','高德实际道路路线，北向上，同一比例，无底图')
- const lines=routes.map(r=>r.steps.flatMap(s=>s.polyline.split(';').map(p=>p.split(',').map(Number)))).filter(p=>p.length>1)
- const points=lines.flat(); if(!points.length)return svg
- const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]); const minX=Math.min(...xs),minY=Math.min(...ys), maxX=Math.max(...xs),maxY=Math.max(...ys)
- const scale=Math.min(550/Math.max((maxX-minX)*.854,.001),280/Math.max(maxY-minY,.001))
- lines.forEach((points,i)=>{const line=document.createElementNS(svg.namespaceURI,'polyline');line.setAttribute('points',points.map(p=>`${25+(p[0]-minX)*.854*scale},${305-(p[1]-minY)*scale}`).join(' '));line.setAttribute('fill','none');line.setAttribute('stroke',['#e9c78c','#7fcdd0','#d59fc0','#99c37b'][i%4]);line.setAttribute('stroke-width','2');const title=document.createElementNS(svg.namespaceURI,'title');title.textContent=routes[i].destination;line.append(title);svg.append(line)})
- return svg
+type Coordinate = [number, number]
+type Drive = { name: string; destination: string; minutes: number; km: number; queriedAt: string }
+type Facility = { name: string; category: string; coordinates: Coordinate; minutes: number }
+type Walk = { segments: {coordinates: Coordinate[]}[]; facilities: Facility[]; fetchedAt?: string }
+const station: Coordinate = [120.6065, 31.3284]
+const motion = matchMedia('(prefers-reduced-motion: reduce)')
+
+async function readJson<T>(url: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(url, {signal})
+  const result = await response.json()
+  if (!response.ok) throw new Error(result.error || '查询失败')
+  return result
 }
-export function initNetworkAnalysis(_scene:THREE.Scene) {
- const dock=document.querySelector('.map-controls-body');if(!dock)return
- const opener=node('button','路网与公共服务');opener.className='tool-btn';opener.setAttribute('type','button');dock.prepend(opener)
- const panel=node('section');panel.id='network-analysis';panel.hidden=true;panel.setAttribute('aria-label','路网与公共服务专题');panel.innerHTML=`<button type="button" data-close>关闭专题</button><h2>县市与乡镇，实际能到哪里？</h2><p>按真实道路比较目的地耗时，或查看区县公共服务设施。数据在点击查询时获取。</p><form data-routes><label>出发地<input name="origin" value="苏州站" required maxlength="80"></label><label>比较对象<select name="set"><option value="county">十个区县行政中心</option><option value="town">十个乡镇 / 街道中心</option></select></label><button type="submit">查询道路与耗时</button><button type="button" data-stop disabled>停止后续查询</button></form><p data-route-status role="status" aria-live="polite"></p><div data-route-output></div><hr><h2>公共服务分布在哪里？</h2><form data-places><label>区县<select name="district">${counties.map(c=>`<option>${c}</option>`).join('')}</select></label><label>类别<select name="category"><option>医疗</option><option>教育</option><option>景区</option></select></label><button type="submit">查询设施点位</button></form><p data-poi-status role="status" aria-live="polite"></p><div data-poi-output></div>`
- const iso=node('section');iso.innerHTML=`<hr><h2>沿真实路网，步行能走多远？</h2><p>从 WGS84 坐标出发，按道路节点拓扑计算5/10/15分钟可达路段。不是目的地点凸包，也不将湖面、建筑内部涂成可达区。</p><form data-iso><label>经度 WGS84<input name="lon" type="number" step="0.000001" value="120.6065" required></label><label>纬度 WGS84<input name="lat" type="number" step="0.000001" value="31.3284" required></label><label>步行时间<select name="minutes"><option>5</option><option>10</option><option selected>15</option></select></label><button>计算路段等时范围</button></form><p data-iso-status role="status" aria-live="polite"></p><div data-iso-output></div>`;panel.append(iso)
- iso.querySelector('form')!.addEventListener('submit',async event=>{event.preventDefault();const form=event.currentTarget as HTMLFormElement,button=form.querySelector('button')!,values=new FormData(form),status=iso.querySelector('[data-iso-status]')!,output=iso.querySelector('[data-iso-output]')!;button.disabled=true;status.textContent='获取起点周边真实OSM路网并计算最短路径，首次可能需要约一分钟…';output.replaceChildren();try{const response=await fetch('/api/isochrone?'+new URLSearchParams({lon:String(values.get('lon')),lat:String(values.get('lat')),minutes:String(values.get('minutes'))}));const data=await response.json();if(!response.ok)throw Error(data.error||'路网计算失败');const routes=data.segments.map((s:{coordinates:number[][]})=>({destination:'可达路段',steps:[{polyline:s.coordinates.map(p=>p.join(',')).join(';'),instruction:''}],origin:'',distance:'',duration:'',queriedAt:''}));output.append(mapLines(routes));status.textContent=`${data.minutes}分钟步行路段等时范围 · ${data.reachedNodes}个可达节点 / ${data.nodeCount}个路网节点 · 起点吸附${data.snapMeters}米（已计入时间）。${data.model}。路网读取于${new Date(data.fetchedAt).toLocaleString('zh-CN')}。`;output.append(node('p','© OpenStreetMap contributors · ODbL 1.0。彩色线条均为可达路段，不同颜色仅区分线段，无强度含义。北向上，无底图。交叉道路仅在共享OSM节点处连接；缺失路径和通行标签可能影响结果。查询范围向四周至少覆盖约1.5公里，大于15分钟模型最大步行距离1.2公里。'))}catch(e){status.textContent=e instanceof Error?e.message:'计算失败'}finally{button.disabled=false}})
- document.getElementById('canvas-container')?.append(panel)
- const style=node('style');style.textContent=`#network-analysis{position:absolute;z-index:220;inset:80px max(12px,17vw) 70px;overflow:auto;padding:24px;background:#102734;color:#e6f1f3;border:1px solid #66818b;border-radius:12px;box-shadow:0 16px 40px #0005}#network-analysis[hidden]{display:none}#network-analysis h2{font-size:20px;margin:18px 0 10px}#network-analysis p,#network-analysis li{font-size:14px;line-height:1.7}#network-analysis form{display:flex;gap:12px;flex-wrap:wrap;align-items:end}#network-analysis label{display:grid;gap:6px;font-size:14px}#network-analysis input,#network-analysis select,#network-analysis button{padding:10px;background:#193b49;color:#f0f6f7;border:1px solid #65838f;border-radius:6px;font:inherit}#network-analysis button{cursor:pointer}#network-analysis button:disabled{opacity:.5;cursor:wait}#network-analysis svg{width:100%;max-height:330px;background:#0b1d27;border-radius:8px}#network-analysis table{width:100%;border-collapse:collapse;font-size:14px}#network-analysis td,#network-analysis th{text-align:left;padding:9px;border-bottom:1px solid #38525d}#network-analysis progress{width:110px;max-width:100%}@media(max-width:900px){#network-analysis{inset:55px 12px 12px;padding:16px}}`;document.head.append(style)
- opener.addEventListener('click',()=>{panel.hidden=!panel.hidden;opener.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)panel.querySelector<HTMLInputElement>('input')?.focus()})
- panel.querySelector('[data-close]')?.addEventListener('click',()=>{panel.hidden=true;opener.setAttribute('aria-expanded','false');opener.focus()})
- let stopped=false
- const stop=panel.querySelector<HTMLButtonElement>('[data-stop]')!;stop.addEventListener('click',()=>{stopped=true;stop.disabled=true})
- panel.querySelector('[data-routes]')!.addEventListener('submit',async event=>{
- event.preventDefault();const form=event.currentTarget as HTMLFormElement,values=new FormData(form),submit=form.querySelector<HTMLButtonElement>('[type=submit]')!;const status=panel.querySelector('[data-route-status]')!,output=panel.querySelector('[data-route-output]')!;const origin=String(values.get('origin'));const destinations=values.get('set')==='town'?towns:counties.map(c=>c==='苏州工业园区'?'苏州工业园区管理委员会':c==='虎丘区'?'苏州高新区管委会':c+'人民政府');submit.disabled=true;stop.disabled=false;stopped=false;output.replaceChildren();const results:{name:string;route?:Route;error?:string}[]=[]
- for(const destination of destinations){if(stopped)break;status.textContent=`正在查询 ${results.length+1}/${destinations.length}：${destination}`;try{const response=await fetch('/api/route?'+new URLSearchParams({origin,destination}));const data=await response.json();if(!response.ok)throw Error(data.error||'查询失败');results.push({name:destination,route:data})}catch(e){results.push({name:destination,error:e instanceof Error?e.message:'查询失败'})}}
- const valid=results.filter(r=>r.route).sort((a,b)=>Number(a.route!.duration)-Number(b.route!.duration));output.append(mapLines(valid.map(r=>r.route!)));output.append(node('p','实际道路折线 · 高德 GCJ-02 坐标 · 北向上、无底图。未叠加坐标基准待核的三维地形。目的地是行政中心，不代表整个辖区；这是离散目的地耗时比较，不是连续等时圈。'))
- const table=node('table');const head=node('tr');['目的地','里程','预计耗时'].forEach(t=>head.append(node('th',t)));table.append(head)
- for(const row of [...valid,...results.filter(r=>!r.route)]){const tr=node('tr');tr.append(node('td',row.name));tr.append(node('td',row.route?(Number(row.route.distance)/1000).toFixed(1)+' km':'—'));tr.append(node('td',row.route?Math.round(Number(row.route.duration)/60)+' 分钟':row.error));table.append(tr)}output.append(table)
- status.textContent=`${stopped?'已停止':'查询完成'}：成功 ${valid.length}，失败 ${results.length-valid.length}。查询时间 ${new Date().toLocaleString('zh-CN')}；高德驾车规划，15 分钟内缓存复用。`;submit.disabled=false;stop.disabled=true
- })
- panel.querySelector('[data-places]')!.addEventListener('submit',async event=>{
- event.preventDefault();const form=event.currentTarget as HTMLFormElement,values=new FormData(form),button=form.querySelector('button')!,status=panel.querySelector('[data-poi-status]')!,output=panel.querySelector('[data-poi-output]')!;button.disabled=true;status.textContent='正在查询设施…';output.replaceChildren()
- try{const response=await fetch('/api/places?'+new URLSearchParams({district:String(values.get('district')),category:String(values.get('category'))}));const data=await response.json();if(!response.ok)throw Error(data.error||'查询失败');status.textContent=`范围：${data.scope}。高德检索匹配 ${data.total} 项，本页展示 ${data.places.length} 项。非完整设施普查，不能据此计算人均供给或判断空白区。查询于 ${new Date(data.queriedAt).toLocaleString('zh-CN')}`;const located = data.places.map((p: {name:string;location:string}) => ({name:p.name,xy:p.location.split(',').map(Number)})).filter((p:{xy:number[]})=>p.xy.length===2&&p.xy.every(Number.isFinite)) as {name:string;xy:number[]}[]
- if(located.length){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 330');svg.setAttribute('role','img');svg.setAttribute('aria-label','本次返回设施的相对分布，北向上，无底图');const xs=located.map(p=>p.xy[0]),ys=located.map(p=>p.xy[1]);const minX=Math.min(...xs),minY=Math.min(...ys);const scale=Math.min(550/Math.max((Math.max(...xs)-minX)*.854,.001),280/Math.max(Math.max(...ys)-minY,.001));located.forEach((p,i)=>{const x=25+(p.xy[0]-minX)*.854*scale,y=305-(p.xy[1]-minY)*scale;const point=document.createElementNS(svg.namespaceURI,'circle');point.setAttribute('cx',String(x));point.setAttribute('cy',String(y));point.setAttribute('r','5');point.setAttribute('fill','#7fcdd0');const title=document.createElementNS(svg.namespaceURI,'title');title.textContent=`${i+1}. ${p.name}`;point.append(title);svg.append(point);const label=document.createElementNS(svg.namespaceURI,'text');label.setAttribute('x',String(x+7));label.setAttribute('y',String(y-5));label.setAttribute('fill','#e6f1f3');label.setAttribute('font-size','12');label.textContent=String(i+1);svg.append(label)});output.append(svg);output.append(node('p','设施点位相对分布 · 北向上、无底图 · 数字对应下方列表；仅限本次检索返回的点位，不代表全部设施。'))}
- const ul=node('ol');for(const place of data.places){const li=node('li',`${place.name} · ${place.district} ${place.address} · ${place.type} · 坐标 ${place.location}`);ul.append(li)}output.append(ul);const focus=node('button','在主地图定位该区县');focus.setAttribute('type','button');focus.addEventListener('click',()=>{const center=getDistrictCoords(String(values.get('district')));if(center){const p=geoTo3D(center.lat,center.lon);flyCameraTo(p.x,p.z,85);panel.hidden=true;opener.focus()}});output.append(focus)}catch(e){status.textContent=e instanceof Error?e.message:'查询失败'}finally{button.disabled=false}
- })
+
+function point([lon, lat]: Coordinate, lift = .65) {
+  const {x, z} = geoTo3D(lat, lon)
+  return new THREE.Vector3(x, getTerrainHeightAtXZ(x, z) + lift, z)
+}
+
+function clear(group: THREE.Group) {
+  for (const child of [...group.children]) {
+    if (child instanceof THREE.Line || child instanceof THREE.Mesh) {
+      child.geometry.dispose()
+      child.material.dispose()
+    }
+    group.remove(child)
+  }
+}
+
+export function initNetworkAnalysis(scene: THREE.Scene) {
+  const container = document.getElementById('canvas-container')
+  const canvas = container?.querySelector('canvas')
+  const camera = scene.children.find((object): object is THREE.Camera => object instanceof THREE.Camera)
+  if (!container || !canvas || !camera) return
+
+  const drive = new THREE.Group()
+  const walk = new THREE.Group()
+  scene.add(drive, walk)
+  const tools = document.createElement('div')
+  tools.className = 'explore-map'
+  tools.innerHTML = `
+    <div class="explore-switch" role="group" aria-label="地图专题">
+      <button type="button" data-mode="drive" aria-pressed="true">驾车联系</button>
+      <button type="button" data-mode="walk" aria-pressed="false">步行生活圈</button>
+    </div>
+    <div class="explore-card" data-drive>
+      <strong>从苏州站出发</strong>
+      <p data-drive-status role="status">正在读取驾车耗时…</p>
+      <div data-drive-result hidden></div>
+    </div>
+    <div class="explore-card" data-walk hidden>
+      <strong>步行能到哪些设施？</strong>
+      <p>点地图换起点，默认从苏州站附近出发。</p>
+      <div class="explore-options">
+        <select aria-label="设施类别"><option value="health">医疗</option><option value="education">教育</option></select>
+        <select aria-label="步行时间"><option value="5">5 分钟</option><option value="10">10 分钟</option><option value="15" selected>15 分钟</option></select>
+      </div>
+      <p data-walk-status role="status"></p>
+      <ul data-facilities></ul>
+      <small>OpenStreetMap · 设施按就近路网估算</small>
+    </div>`
+  container.append(tools)
+  const driveCard = tools.querySelector<HTMLElement>('[data-drive]')!
+  const walkCard = tools.querySelector<HTMLElement>('[data-walk]')!
+  const driveStatus = tools.querySelector<HTMLElement>('[data-drive-status]')!
+  const driveResult = tools.querySelector<HTMLElement>('[data-drive-result]')!
+  const walkStatus = tools.querySelector<HTMLElement>('[data-walk-status]')!
+  const facilities = tools.querySelector<HTMLElement>('[data-facilities]')!
+  const category = walkCard.querySelector<HTMLSelectElement>('select[aria-label="设施类别"]')!
+  const minutes = walkCard.querySelector<HTMLSelectElement>('select[aria-label="步行时间"]')!
+  let mode: 'drive' | 'walk' | null = 'drive'
+  let origin = station
+  let walking: Walk | undefined
+  let stationWalk: Record<string, Walk> | undefined
+  let walkingRequest: AbortController | undefined
+  let routeRequest: AbortController | undefined
+  const ray = new THREE.Raycaster()
+  const endpoints = new Map<THREE.Object3D, Drive>()
+
+  function arrive(element: HTMLElement) {
+    if (!motion.matches) element.animate([{opacity:.55, transform:'translateY(5px)'}, {opacity:1, transform:'none'}], {duration:220,easing:'cubic-bezier(.2,.8,.2,1)'})
+  }
+
+  function mark(group: THREE.Group, where: Coordinate, color: number, size: number) {
+    const marker = new THREE.Mesh(new THREE.SphereGeometry(size, 12, 8), new THREE.MeshBasicMaterial({color}))
+    marker.position.copy(point(where, size + .45))
+    group.add(marker)
+    return marker
+  }
+
+  function renderWalk() {
+    clear(walk)
+    mark(walk, origin, 0xffda8a, .45)
+    facilities.replaceChildren()
+    if (!walking) return
+    const coordinates = walking.segments.flatMap(segment => segment.coordinates.map(value => point(value)))
+    if (coordinates.length) walk.add(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(coordinates),
+      new THREE.LineBasicMaterial({color:0x51ddbe, transparent:true, opacity:.85}),
+    ))
+    const matches = walking.facilities.filter(place => place.category === category.value)
+    walkStatus.textContent = matches.length ? `约 ${minutes.value} 分钟内 · ${matches.length} 处已标注设施` : '这个范围内暂无匹配的已标注设施。'
+    for (const place of matches) {
+      mark(walk, place.coordinates, 0xffd074, .27)
+      const item = document.createElement('li')
+      item.textContent = `${place.name} · 约 ${place.minutes} 分钟`
+      facilities.append(item)
+    }
+    if (origin === station && walking.fetchedAt) walkStatus.textContent += ' · 示例'
+    arrive(walkStatus)
+  }
+
+  async function loadWalk() {
+    walkingRequest?.abort()
+    const request = new AbortController()
+    walkingRequest = request
+    walking = undefined
+    renderWalk()
+    walkStatus.textContent = '正在计算步行范围…'
+    try {
+      const query = new URLSearchParams({lon:String(origin[0]), lat:String(origin[1]), minutes:minutes.value})
+      if (origin === station && !stationWalk) {
+        stationWalk = await readJson<Record<string, Walk>>('/station-walk.json', request.signal)
+      }
+      const result = origin === station && stationWalk
+        ? stationWalk[minutes.value]
+        : await readJson<Walk>('/api/isochrone?' + query, request.signal)
+      if (request.signal.aborted) return
+      walking = result
+      renderWalk()
+    } catch {
+      if (!request.signal.aborted) walkStatus.textContent = '暂时无法读取步行路网，点地图重试。'
+    }
+  }
+
+  function setMode(next: typeof mode) {
+    if (mode === 'walk' && next !== 'walk') resetCameraView()
+    mode = next
+    drive.visible = next === 'drive'
+    walk.visible = next === 'walk'
+    driveCard.hidden = !drive.visible
+    walkCard.hidden = !walk.visible
+    canvas?.classList.toggle('is-picking-origin', walk.visible)
+    for (const button of tools.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.mode === next))
+    }
+    if (next === 'walk') {
+      if (walking) renderWalk()
+      else if (!walkingRequest || walkingRequest.signal.aborted) void loadWalk()
+      const center = point(origin)
+      flyCameraTo(center.x, center.z, 30)
+      arrive(walkCard)
+    } else {
+      walkingRequest?.abort()
+      if (next === 'drive') arrive(driveCard)
+    }
+  }
+
+  async function selectRoute(row: Drive) {
+    routeRequest?.abort()
+    const request = new AbortController()
+    routeRequest = request
+    driveResult.hidden = false
+    driveResult.replaceChildren()
+    const headline = document.createElement('strong')
+    headline.textContent = `${row.name} · 约 ${row.minutes} 分钟`
+    const caption = document.createElement('p')
+    caption.textContent = '正在读取道路路线…'
+    driveResult.append(headline, caption)
+    arrive(driveResult)
+    try {
+      const query = new URLSearchParams({origin:'苏州站', destination:row.destination})
+      const result = await readJson<{distance:string; duration:string; steps:{polyline:string}[]}>('/api/route?' + query, request.signal)
+      if (request.signal.aborted) return
+      caption.textContent = `当前估算 ${Math.round(Number(result.duration)/60)} 分钟 · ${(Number(result.distance)/1000).toFixed(1)} 公里 · 高德`
+      const points = result.steps.flatMap(step => (step.polyline || '').split(';').map(pair => pair.split(',').map(Number)))
+        .filter(pair => pair.length === 2 && pair.every(Number.isFinite))
+      if (points.length < 2) return
+      const x0 = Math.min(...points.map(pair => pair[0])), y0 = Math.min(...points.map(pair => pair[1]))
+      const width = Math.max(...points.map(pair => pair[0])) - x0
+      const height = Math.max(...points.map(pair => pair[1])) - y0
+      const scale = Math.min(232 / Math.max(.854 * width, .00001), 85 / Math.max(height, .00001))
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      svg.setAttribute('viewBox', '0 0 248 101')
+      svg.setAttribute('role', 'img')
+      svg.setAttribute('aria-label', '高德驾车路线形状')
+      const path = document.createElementNS(svg.namespaceURI, 'polyline')
+      path.setAttribute('points', points.map(([x,y]) => `${8+(x-x0)*.854*scale},${93-(y-y0)*scale}`).join(' '))
+      path.setAttribute('fill', 'none')
+      path.setAttribute('stroke', '#f9c782')
+      path.setAttribute('stroke-width', '2')
+      svg.append(path)
+      driveResult.append(svg)
+    } catch {
+      if (!request.signal.aborted) caption.textContent = `快照 ${row.km} 公里 · 当前道路路线暂不可用`
+    }
+  }
+
+  async function loadDrive() {
+    try {
+      const rows = await readJson<Drive[]>('/station-drive.json')
+      const date = rows[0]?.queriedAt.slice(0,10)
+      driveStatus.textContent = `点飞线终点查看路线 · 高德 ${date ?? ''} 快照`
+      mark(drive, station, 0xffe1a3, .78)
+      for (const row of rows) {
+        const destination = getDistrictCoords(row.name)
+        if (!destination) continue
+        const where: Coordinate = [destination.lon, destination.lat]
+        const start = point(station, 1.1)
+        const end = point(where, 1.1)
+        const control = start.clone().lerp(end,.5)
+        control.y += Math.max(3, start.distanceTo(end)*.21)
+        const tint = row.minutes < 30 ? 0x6be4cc : row.minutes < 60 ? 0xf5d486 : 0xffa184
+        const vertices = new THREE.QuadraticBezierCurve3(start, control, end).getPoints(32)
+        const geometry = new THREE.BufferGeometry().setFromPoints(vertices)
+        const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({color:tint,transparent:true,opacity:.85}))
+        drive.add(line)
+        if (!motion.matches) {
+          const started = performance.now()
+          const reveal = (now: number) => {
+            const ratio = Math.min(1,(now-started)/650)
+            geometry.setDrawRange(0, Math.ceil(33*ratio))
+            if (ratio < 1) requestAnimationFrame(reveal)
+          }
+          geometry.setDrawRange(0,0)
+          requestAnimationFrame(reveal)
+        }
+        endpoints.set(mark(drive, where, tint, .74), row)
+        endpoints.set(line, row)
+      }
+      const choices = document.createElement('select')
+      choices.setAttribute('aria-label','查看目的地路线')
+      choices.append(new Option('选择目的地查看路线',''))
+      for (const row of rows) choices.append(new Option(`${row.name} · ${row.minutes} 分钟`,row.name))
+      choices.addEventListener('change', () => {
+        const row = rows.find(item => item.name === choices.value)
+        if (row) void selectRoute(row)
+      })
+      const key = document.createElement('small')
+      key.textContent = '青色 <30 分 · 金色 30–59 分 · 橙色 ≥60 分'
+      driveStatus.after(choices,key)
+    } catch {
+      driveStatus.textContent = '驾车耗时快照暂不可用。'
+    }
+  }
+
+  tools.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(button => button.addEventListener('click', () => {
+    const next = button.dataset.mode as 'drive' | 'walk'
+    setMode(mode === next ? null : next)
+  }))
+  minutes.addEventListener('change', () => void loadWalk())
+  category.addEventListener('change', renderWalk)
+  canvas.addEventListener('click', event => {
+    if (!mode || wasCanvasDragged()) return
+    const bounds = canvas.getBoundingClientRect()
+    ray.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1, 1-(event.clientY-bounds.top)/bounds.height*2),camera)
+    if (mode === 'drive') {
+      ray.params.Line = {threshold:.7}
+      const selected = ray.intersectObjects([...endpoints.keys()])[0]
+      const row = selected && endpoints.get(selected.object)
+      if (row) {
+        event.stopImmediatePropagation()
+        void selectRoute(row)
+      }
+      return
+    }
+    event.stopImmediatePropagation()
+    const terrain = scene.getObjectByName('terrain')
+    const hit = terrain?.visible && ray.intersectObject(terrain)[0]
+    if (!hit) {
+      walkStatus.textContent = '请开启地形并点击苏州市域地图。'
+      return
+    }
+    origin = [
+      BOUNDS.minLon + (hit.point.x + 100) / 200 * (BOUNDS.maxLon - BOUNDS.minLon),
+      BOUNDS.minLat + (100 - hit.point.z) / 200 * (BOUNDS.maxLat - BOUNDS.minLat),
+    ]
+    void loadWalk()
+  }, true)
+  void loadDrive()
 }
