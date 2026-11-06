@@ -362,11 +362,14 @@ export async function initScene(): Promise<THREE.Scene> {
   let lastTime = performance.now()
   let lastFrame = 0
 
+  let previousViewLevel = ""
+  const viewButtons = document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]')
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)')
   function animate() {
     requestAnimationFrame(animate)
 
     const now = performance.now()
-    if (now - lastFrame < 1000 / 45) return
+    if (document.hidden || now - lastFrame < 1000 / 60) return
     lastFrame = now
     const timeSec = now * 0.001
     const deltaSec = Math.min((now - lastTime) * 0.001, 0.1)
@@ -383,15 +386,16 @@ export async function initScene(): Promise<THREE.Scene> {
     currentDist += (desiredDist - currentDist) * dampFactor
 
     const viewLevel = desiredDist > 105 ? 'city' : desiredDist > 70 ? 'region' : 'near'
-    document.querySelectorAll<HTMLButtonElement>('#map-scale button[data-view-level]').forEach(button => {
+    if (viewLevel !== previousViewLevel) viewButtons.forEach(button => {
       const selected = button.dataset.viewLevel === viewLevel
       button.classList.toggle('active', selected)
       button.setAttribute('aria-pressed', String(selected))
     })
 
+    previousViewLevel = viewLevel
     const elapsed = now - entranceStart
     let activeDist = currentDist
-    if (elapsed < entranceDuration && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (elapsed < entranceDuration && !motionPreference.matches) {
       const t = Math.max(0, elapsed / entranceDuration)
       const ease = t * t * (3 - 2 * t) // smoother spatial approach with gentle arrival
       activeDist = startDist + (currentDist - startDist) * ease

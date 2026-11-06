@@ -1,0 +1,20 @@
+{
+  "version": "2026.11.06",
+  "statistics": {
+    "annual": {
+      "year": 2025,
+      "source": "https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml"
+    },
+    "quarterly": {
+      "period": "2026-Q1–Q3",
+      "source": "https://tjj.suzhou.gov.cn/sztjj/sjfbyjd/202610/97a2efe153df47c8b8f4754ec6b8b230.shtml"
+    },
+    "districts": {
+      "year": 2025,
+      "coverage": "Verified records only; coverage varies by metric",
+      "audit": "资料目录/数据审计-2026-11-05.md"
+    }
+  },
+  "photoCredits": "/images/photos/credits.json",
+  "roadMetadata": "/suzhou-roads-metadata.json"
+}

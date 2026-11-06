@@ -1,5 +1,6 @@
 // 数字跳动动画
 export function animateNumbers() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
   const statValues = document.querySelectorAll('.stat-value')
 
   statValues.forEach(el => {

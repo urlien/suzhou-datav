@@ -30,7 +30,7 @@ export const populationData: Record<string, number> = {
   '吴江区': 158.00,       // 原底稿年份待核；2025年公报只披露户籍人口
   '常熟市': 168.35,       // 2025年末，常熟市统计公报
   '张家港市': 144.20,     // 2025年末，张家港市统计公报
-  '昆山市': 214.85,       // 2023年末
+  '昆山市': 217.65,       // 2025年末，官方人口专题
   '太仓市': 84.92,        // 2025年末，太仓市统计公报
 }
 
@@ -52,7 +52,7 @@ export const gdpData: Record<string, number> = {
 export const populationYearData: Record<string, number | null> = {
   '姑苏区': 2025, '吴中区': 2023, '相城区': null, '虎丘区': 2025,
   '苏州工业园区': 2023, '工业园区': 2023, '吴江区': null,
-  '常熟市': 2025, '张家港市': 2025, '昆山市': 2023, '太仓市': 2025,
+  '常熟市': 2025, '张家港市': 2025, '昆山市': 2025, '太仓市': 2025,
 }
 
 export const gdpYearData: Record<string, number> = {
@@ -314,7 +314,7 @@ export function getDistrictData(): DistrictData[] {
 【常住人口数据】
 - 吴中区、苏州工业园区、昆山市：2023年末数据，原始表待逐项核对
   来源：《苏州统计年鉴-2024》及各区县2023年统计公报
-  
+
 - 相城区、吴江区：原底稿年份与人口口径未核实，不能标为2025年末常住人口
   原有来源线索待回查：
   - 相城区：http://www.szxc.gov.cn
@@ -329,7 +329,7 @@ export function getDistrictData(): DistrictData[] {
   来源：各区县2025年统计公报/快报
   - 吴中区：http://www.szwz.gov.cn
   - 相城区：http://www.szxc.gov.cn
-  
+
 - 姑苏区、虎丘区、苏州工业园区、吴江区、常熟市、张家港市、昆山市、太仓市：2025年 GDP 已在政府原文中核对。
   直链见 verifiedDistrictSources；园区引用官方简介，其余引用统计公报。
 
@@ -340,3 +340,16 @@ export function getDistrictData(): DistrictData[] {
 
 
 
+
+export const populationSpecificSources: Record<string,string> = {
+  '昆山市': 'https://www.ks.gov.cn/kss/tjfx/202605/16701eedcb2a4ee6aa9a384c05795cfb.shtml',
+}
+
+/** Same-year evidence gate shared by screen and CSV. Unknown values stay null. */
+export function getVerifiedDistrictMetrics(name: string) {
+  const key = normalizeDistrictName(name)
+  const source = verifiedDistrictSources[key]
+  const populationVerified = populationYearData[key] === 2025 && Boolean(source?.population || populationSpecificSources[key]) && Number.isFinite(populationData[key])
+  const gdpVerified = gdpYearData[key] === 2025 && Boolean(source?.gdp) && Number.isFinite(gdpData[key])
+  return { population: populationVerified ? populationData[key] : null, gdp: gdpVerified ? gdpData[key] : null, populationSource: populationVerified ? populationSpecificSources[key] || source?.url || '' : '', gdpSource: gdpVerified ? source?.url || '' : '', year: 2025 }
+}

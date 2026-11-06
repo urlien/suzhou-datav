@@ -1,8 +1,8 @@
+import { initNetworkAnalysis } from "./components/network-analysis"
 import * as THREE from "three"
 import { initScene, resetCameraView, setMapViewDistance, startEntranceAnimation, updateSceneTheme } from "./scene"
 import { initCharts, resizeAllCharts, updateChartsTheme } from "./components/charts"
 import { addHeatmap, toggleHeatmap } from "./components/heatmap"
-import { addFlyingLines, switchFlyingLineSystem, toggleFlyingLines } from "./components/flying-lines"
 import { addBoundary, highlightDistrictBoundary, toggleBoundary } from "./components/boundary"
 import { openDistrictModal, setupEnhancedInteraction } from "./components/enhanced-interaction"
 import { initSearch } from "./components/search"
@@ -10,7 +10,6 @@ import { initExport } from "./components/export"
 import { animateNumbers } from "./components/animation"
 import { initTimeline } from "./components/timeline"
 import { initComparison } from "./components/comparison"
-import { addKernelDensity, addStandardDeviationalEllipse, addAccessibilityAnalysis } from "./components/spatial-analysis"
 import { initFilter } from "./components/filter"
 import { initRuralUrban } from "./components/rural-urban"
 import { initDataStory } from "./components/data-story"
@@ -20,6 +19,7 @@ import { initRuralUrbanIndex } from "./components/rural-urban-index"
 import { exportPDF } from "./components/pdf-export"
 import { addLandcover } from "./components/landcover"
 import { addRoadNight, setRoadNightVisible } from "./components/road-night"
+import "./measure.css"
 import "./style.css"
 import "./print.css"
 
@@ -27,7 +27,6 @@ async function main() {
   const scene = await initScene()
   addHeatmap(scene)
   toggleHeatmap(scene)
-  addFlyingLines(scene)
 
   // 并行加载地图图层；建筑白膜待数据重建后再接入。
   await Promise.all([
@@ -43,6 +42,7 @@ async function main() {
 
   initCharts()
   initSearch()
+  initNetworkAnalysis(scene)
   document.querySelectorAll<HTMLButtonElement>('.district-nav-item').forEach(button => {
     button.addEventListener('click', () => {
       const district = button.dataset.district
@@ -51,7 +51,7 @@ async function main() {
       openDistrictModal(district)
     })
   })
-  document.getElementById('featured-district')?.addEventListener('click', () => openDistrictModal('姑苏区'))
+  document.getElementById('featured-district')?.addEventListener('click', () => openDistrictModal(document.getElementById('featured-district')?.dataset.district || '姑苏区'))
   initExport()
   initTimeline()
   initComparison()
@@ -84,6 +84,11 @@ async function main() {
   })
 
   // 底部工具栏 - 4个图层切换（地形、行政边界、人口热力、3D建筑）
+  const controls = document.getElementById('map-controls') as HTMLDetailsElement | null
+  controls?.addEventListener('toggle', () => controls.setAttribute('aria-label', controls.open ? '地图工具，点击标题收起' : '地图工具，点击标题展开'))
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && controls?.open) { controls.open = false; controls.querySelector('summary')?.focus() }
+  })
   const toolbar = document.getElementById("toolbar")
   const legendEl = document.getElementById('legend')
   const syncLegendVisibility = () => {
@@ -94,6 +99,14 @@ async function main() {
   syncLegendVisibility()
   if (toolbar) {
     toolbar.querySelectorAll("button[data-layer]").forEach(btn => {
+      btn.setAttribute("aria-pressed", String(btn.classList.contains("active")))
+      const objectName = { landcover: "landcover", roads: "road-night-group" }[btn.getAttribute("data-layer") || ""]
+      if (objectName && !scene.getObjectByName(objectName)) {
+        (btn as HTMLButtonElement).disabled = true
+        btn.classList.remove("active")
+        btn.setAttribute("aria-pressed", "false")
+        btn.setAttribute("title", "图层加载失败，请刷新重试")
+      }
       btn.addEventListener("click", () => {
         const layer = btn.getAttribute("data-layer")
         if (layer === "terrain") {
@@ -116,7 +129,7 @@ async function main() {
           syncLegendVisibility()
         } else if (layer === "roads") {
           const active = btn.classList.toggle('active')
-          const visible = setRoadNightVisible(scene, active)
+          const visible = setRoadNightVisible(scene, active && scene.getObjectByName('terrain')?.visible !== false)
           btn.setAttribute('aria-pressed', String(active))
           document.getElementById('night-map-note')?.toggleAttribute('hidden', !visible)
         } else if (layer === "landcover") {
@@ -130,80 +143,14 @@ async function main() {
     })
   }
 
-  // 飞线系统切换
-  const flyingSystemMap: Record<string, number> = {
-    population: 0,
-    transport: 1,
-    logistics: 2,
-    economic: 3,
-  }
-  const flyingToolbar = document.getElementById('flying-toolbar')
-  flyingToolbar?.querySelectorAll<HTMLButtonElement>("button[data-flying]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const systemName = btn.getAttribute("data-flying")!
-      const index = flyingSystemMap[systemName]
-      if (index !== undefined) {
-        const wasActive = btn.classList.contains('active')
-        if (wasActive) toggleFlyingLines(scene)
-        else switchFlyingLineSystem(scene, index)
-        flyingToolbar.querySelectorAll<HTMLButtonElement>("button[data-flying]").forEach(button => {
-          const selected = button === btn && !wasActive
-          button.classList.toggle('active', selected)
-          button.setAttribute('aria-pressed', String(selected))
-        })
-      }
-    })
+  toolbar?.addEventListener("click", () => {
+    toolbar.querySelectorAll("button[data-layer]").forEach(button => button.setAttribute("aria-pressed", String(button.classList.contains("active"))))
   })
 
   // 视角复位按钮
   document.getElementById("btn-reset-view")?.addEventListener("click", () => {
     highlightDistrictBoundary(scene, null)
     resetCameraView()
-  })
-
-  // 空间分析按钮（复用缓存图层，避免重复创建/销毁导致显存泄漏）
-  const legendTitleEl = document.querySelector("#legend .legend-title")
-
-  document.getElementById("btn-kernel-density")?.addEventListener("click", () => {
-    const btn = document.getElementById("btn-kernel-density")!
-    const existing = scene.getObjectByName("kernel-density")
-    if (existing && existing.visible) {
-      existing.visible = false
-      btn.classList.remove("active")
-      if (legendTitleEl) legendTitleEl.textContent = "人口密度热力"
-    } else {
-      addKernelDensity(scene)
-      btn.classList.add("active")
-      if (legendTitleEl) legendTitleEl.textContent = "A级景区核密度"
-    }
-    syncLegendVisibility()
-  })
-
-  document.getElementById("btn-ellipse")?.addEventListener("click", () => {
-    const btn = document.getElementById("btn-ellipse")!
-    const existing = scene.getObjectByName("std-ellipse-group")
-    if (existing && existing.visible) {
-      existing.visible = false
-      btn.classList.remove("active")
-    } else {
-      addStandardDeviationalEllipse(scene)
-      btn.classList.add("active")
-    }
-  })
-
-  document.getElementById("btn-accessibility")?.addEventListener("click", () => {
-    const btn = document.getElementById("btn-accessibility")!
-    const existing = scene.getObjectByName("accessibility-group")
-    if (existing && existing.visible) {
-      existing.visible = false
-      btn.classList.remove("active")
-      if (legendTitleEl) legendTitleEl.textContent = "人口密度热力"
-    } else {
-      addAccessibilityAnalysis(scene)
-      btn.classList.add("active")
-      if (legendTitleEl) legendTitleEl.textContent = "通行阻力模型（10~60分钟示意）"
-    }
-    syncLegendVisibility()
   })
 
   // 底部综合分析抽屉（历年时间轴 / 区县对比 / 数据筛选）
@@ -289,5 +236,8 @@ async function main() {
   setTimeout(animateNumbers, 200)
 }
 
-main()
-
+main().catch(error => {
+  console.error('地图初始化失败', error)
+  const loading = document.getElementById('loading')
+  if (loading) loading.textContent = '地图加载失败，请刷新重试。'
+})

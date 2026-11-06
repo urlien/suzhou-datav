@@ -1,5 +1,5 @@
 // 数据导出功能；区县数据混合年份，逐项来源尚待核验。
-import { gdpYearData, getDistrictData, populationYearData, verifiedDistrictSources } from '../data/official-stats'
+import { getVerifiedDistrictMetrics, gdpYearData, getDistrictData, populationYearData, verifiedDistrictSources, populationSpecificSources } from '../data/official-stats'
 import { captureMapImage } from '../scene'
 
 export function initExport() {
@@ -27,21 +27,22 @@ function exportAsPng() {
 function exportAsCsv() {
   const districts = getDistrictData()
   const rows: string[][] = [
-    ['区县', 'GDP(亿元)', 'GDP年份', '常住人口(万人)', '人口年份', '面积(km²)', '面积标注年份', '2025年指标来源链接', '核验状态'],
+    ['区县', 'GDP(亿元)', 'GDP年份', '常住人口(万人)', '人口年份', '面积(km²)', '面积标注年份', 'GDP来源链接', '人口来源链接', '核验状态'],
     ...districts.map(d => [
       d.name,
-      d.gdp.toFixed(2),
+      verifiedDistrictSources[d.name]?.gdp && Number.isFinite(d.gdp) ? d.gdp.toFixed(2) : '',
       String(gdpYearData[d.name]),
-      d.population.toFixed(2),
-      populationYearData[d.name] ? String(populationYearData[d.name]) : '待核',
-      d.area.toFixed(2),
+      getVerifiedDistrictMetrics(d.name).population !== null ? d.population.toFixed(2) : '',
+      getVerifiedDistrictMetrics(d.name).population !== null ? '2025' : '',
+      '',
       '待核',
       verifiedDistrictSources[d.name]?.url || '',
-      verifiedDistrictSources[d.name] ? `GDP${verifiedDistrictSources[d.name].gdp ? '已' : '未'}核对；人口${verifiedDistrictSources[d.name].population ? '已' : '未'}核对；面积待核验` : '逐项来源待核验',
+      populationSpecificSources[d.name] || verifiedDistrictSources[d.name]?.url || '',
+      verifiedDistrictSources[d.name] ? `GDP${verifiedDistrictSources[d.name].gdp ? '已' : '未'}核对；人口${getVerifiedDistrictMetrics(d.name).population !== null ? '已' : '未'}核对；面积待核验` : '逐项来源待核验',
     ]),
   ]
 
-  const csv = rows.map(row => row.join(',')).join('\n')
+  const csv = rows.map(row => row.map(value => '"' + value.replace(/"/g, '""') + '"').join(',')).join('\n')
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

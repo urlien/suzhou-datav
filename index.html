@@ -79,14 +79,8 @@
       <div id="canvas-container">
         <canvas id="canvas"></canvas>
 
+        <details id="map-controls"><summary>地图工具与图层</summary><div class="map-controls-body">
         <!-- 左上角空间分析按钮组（位于指标卡正下方，不遮挡左侧栏） -->
-        <div id="spatial-toolbar">
-          <span class="toolbar-label">空间分析：</span>
-          <button id="btn-kernel-density" class="tool-btn" title="景区示意点位核密度；点位和等级待逐点核验">🔥 核密度</button>
-          <button id="btn-ellipse" class="tool-btn" title="标准差椭圆方向分析">⭕ 椭圆分析</button>
-          <button id="btn-accessibility" class="tool-btn" title="手工道路走廊和水体阻抗的模型演示，非实测路网或真实出行时间">⏱️ 可达性示意</button>
-        </div>
-
         <div id="map-scale" aria-label="地图视距">
           <span>视距</span>
           <button type="button" data-view-level="city" class="active" aria-pressed="true">全域</button>
@@ -101,19 +95,11 @@
           <button class="tool-btn active" data-layer="landcover" title="OpenStreetMap 已标注的水面与林地">水系林地</button>
           <button class="tool-btn active" data-layer="roads" type="button" aria-pressed="true" title="基于 OpenStreetMap 道路位置绘制的夜间视觉演绎；非实测灯光">道路夜景</button>
           <button class="tool-btn active" data-layer="boundary">边界</button>
-          <button class="tool-btn" data-layer="heatmap">热力</button>
+          <button class="tool-btn" data-layer="heatmap">区县指标柱</button>
           <button id="btn-reset-view" class="tool-btn" title="复位3D相机视角">🎯 复位</button>
         </div>
 
-        <div id="flying-toolbar" aria-label="示意飞线专题">
-          <span class="toolbar-label">飞线：</span>
-          <button class="tool-btn active" data-flying="population" aria-pressed="true" title="示意飞线，未接入实测人口流动数据">人口流动</button>
-          <button class="tool-btn" data-flying="transport" title="示意飞线，未接入实测交通流量数据">交通流量</button>
-          <button class="tool-btn" data-flying="logistics" title="示意飞线，未接入实测物流货运数据">物流货运</button>
-          <button class="tool-btn" data-flying="economic" title="示意飞线，未接入实测经济联系数据">经济联系</button>
-          <span class="toolbar-label">关系示意 · 非实测流量</span>
-        </div>
-
+        </div></details>
         <!-- 左下角悬浮信息提示 -->
         <div id="terrain-info"></div>
         <div id="night-map-note">道路夜景为视觉演绎，非实测灯光 · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></div>
@@ -126,7 +112,7 @@
           <button id="export-png" class="tool-btn" title="导出3D画布PNG">📷 PNG</button>
           <button id="export-csv" class="tool-btn" title="导出混合年份区县数据，逐项来源待核验">📊 CSV</button>
           <div class="toolbar-divider"></div>
-          <button class="tool-btn drawer-tab-btn" data-drawer="timeline">📅 历年时间轴</button>
+          <button class="tool-btn drawer-tab-btn" data-drawer="timeline">年度 GDP</button>
           <button class="tool-btn drawer-tab-btn" data-drawer="comparison">⚖️ 区县对比</button>
           <button class="tool-btn drawer-tab-btn" data-drawer="filter">🔍 筛选器</button>
           <button id="story-btn" class="tool-btn" title="打开交互式数据故事">📖 数据故事</button>
@@ -134,8 +120,8 @@
 
         <!-- 右下角图例 -->
         <div id="legend">
-          <div class="legend-title">人口密度热力</div>
-          <div class="legend-note">专题图示意，区县数据年份与口径待统一</div>
+          <div class="legend-title">2025 年区县指标</div>
+          <div class="legend-note">仅显示同年已核指标；缺失值不按零处理</div>
           <div class="legend-bar"></div>
           <div class="legend-labels">
             <span>低</span><span>高</span>
@@ -177,14 +163,14 @@
             <small class="region-feature-credit">照片：<a href="https://commons.wikimedia.org/wiki/File:Shantang_Canal_at_Night.jpg" target="_blank" rel="noopener noreferrer">Chinatravelsavvy</a> · <a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank" rel="noopener noreferrer">CC BY-SA 3.0</a><br>封面裁切</small>
           </div>
         </div>
-        <div class="panel-title">2025 全市概览</div>
+        <div class="panel-title">最新发布 · 2026 年前三季度</div><div class="latest-stat"><strong>21190.90 亿元</strong><p>全市 GDP · 同比增长 5.6%</p><p>2026-10-27 发布。季度累计与下方全年数据不可直接比较。</p><a href="https://tjj.suzhou.gov.cn/sztjj/sjfbyjd/202610/97a2efe153df47c8b8f4754ec6b8b230.shtml" target="_blank" rel="noopener noreferrer">苏州市统计局原文 ↗</a></div><div class="panel-title">2025 全市概览</div>
         <div id="stats">
           <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；初步核算"><div class="stat-value">27695.1亿</div><div class="stat-label">2025年GDP</div></div>
           <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；按不变价格计算"><div class="stat-value">5.4%</div><div class="stat-label">2025年GDP增速</div></div>
           <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；分母为规模以上工业总产值"><div class="stat-value">56.2%</div><div class="stat-label">高新技术产值占比</div></div>
           <div class="stat-card" title="来源：苏州市统计局《2025年苏州市国民经济和社会发展统计公报》；三次产业结构"><div class="stat-value">52.9%</div><div class="stat-label">第三产业占比</div></div>
         </div>
-        <div class="panel-title">🌤️ 实时天气与空气质量</div>
+        <div class="panel-title">天气观测</div>
         <div id="weather-panel" class="weather-container"></div>
 
         <div class="panel-title">🚗 城市交通客流</div>
@@ -211,15 +197,7 @@
         <div class="panel-title">💼 就业与居民收入</div>
         <div id="chart-employment" class="chart"></div>
 
-        <div class="panel-title">🏘️ 城乡融合指标原型（示意）</div>
-        <div class="fusion-summary">
-          <div class="fusion-score">
-            <span class="fusion-label">示例得分</span>
-            <span id="fusion-index" class="fusion-value">--</span>
-            <span class="fusion-unit">分</span>
-          </div>
-          <div class="fusion-note">权重与分值为项目自设演示，未经实测或论文验证</div>
-        </div>
+        <div class="panel-title">城乡收入差距</div>
         <div id="chart-rural-urban-index" class="chart"></div>
 
         <div class="panel-title">⚖️ 城乡五维指标对比</div>

@@ -32,7 +32,7 @@ export function initSearch() {
       const matchedSub = d.subDistricts.find(sd => sd.name.toLowerCase().includes(query))
       const matchedHighlight = d.highlights.find(h => h.toLowerCase().includes(query))
       const subBadge = matchedSub
-        ? `<span class="search-desc" style="color:var(--accent)">📍 命中下辖镇街/板块：${matchedSub.name}（${matchedSub.population}万人 | ${matchedSub.gdp}亿）</span>`
+        ? `<span class="search-desc" style="color:var(--accent)">📍 命中下辖镇街/板块：${matchedSub.name}</span>`
         : matchedHighlight
           ? `<span class="search-desc" style="color:var(--accent2)">✨ 命中亮点：${matchedHighlight}</span>`
           : `<span class="search-desc">${d.desc}</span>`

@@ -9,7 +9,7 @@ interface DataSource {
 }
 
 const dataSources: DataSource[] = [
-  { chartId: 'population', source: '区县统计资料', year: '2023/2025 混合', reliability: 'unverified' },
+  { chartId: 'population', source: '区县统计资料', year: '2025（仅展示已核年份）', reliability: 'unverified' },
   { chartId: 'industry', source: '苏州市统计局', year: '2025', reliability: 'unverified' },
   { chartId: 'traffic', source: '示意曲线', year: '未接入实测客流', reliability: 'unverified' },
   { chartId: 'landuse', source: '示意分类', year: '待接入核实数据', reliability: 'unverified' },
@@ -45,6 +45,9 @@ export function initDataAnnotations() {
     const chartEl = document.getElementById(`chart-${ds.chartId}`)
     if (!chartEl) return
 
+    if (chartEl.dataset.verifiedSource) {
+      ds.source = '苏州市统计局'; ds.year = chartEl.dataset.verifiedPeriod || '2025'; ds.url = chartEl.dataset.verifiedSource; ds.reliability = 'official'
+    }
     // 避免重复插入
     if (chartEl.nextElementSibling?.classList.contains('data-annotation')) return
 
@@ -55,6 +58,9 @@ export function initDataAnnotations() {
       <span class="annotation-text">${ds.source} · ${ds.year} · ${reliabilityLabels[ds.reliability]}</span>
     `
     // 插入在 .chart 容器外部正下方，避免撑破 ECharts 内部画布或与下一标题重叠
+    if (ds.url) {
+      const link=document.createElement('a'); link.href=ds.url; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent=' 原文 ↗'; annotation.append(link)
+    }
     chartEl.insertAdjacentElement('afterend', annotation)
   })
 }

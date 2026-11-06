@@ -1,3 +1,8 @@
 dist/
 node_modules/
 local-data/
+
+.env.local
+
+work/
+work-photo.json

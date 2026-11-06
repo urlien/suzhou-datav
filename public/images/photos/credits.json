@@ -1,0 +1,92 @@
+{
+  "姑苏区": {
+    "src": "/images/gusu-shantang-night.jpg",
+    "caption": "山塘河夜景",
+    "author": "Chinatravelsavvy",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Shantang_Canal_at_Night.jpg",
+    "date": "拍摄日期见来源页"
+  },
+  "苏州工业园区": {
+    "src": "/images/photos/苏州工业园区.jpg",
+    "caption": "金鸡湖与东方之门",
+    "author": "EricStoneChina",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Jinji_Lake,_with_view_of_Gate_of_the_Orient.jpg",
+    "date": "2024-02-16 12:12:52"
+  },
+  "虎丘区": {
+    "src": "/images/photos/虎丘区.jpg",
+    "caption": "苏州博物馆西馆",
+    "author": "Nat4Eben",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:20261004_Suzhou_Museum_West.jpg",
+    "date": "2026-10-04 12:46:01"
+  },
+  "吴中区": {
+    "src": "/images/photos/吴中区.jpg",
+    "caption": "吴文化博物馆",
+    "author": "Brookqi",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Wuzhongbowuguan.jpg",
+    "date": "2021-11-18 10:18:39"
+  },
+  "相城区": {
+    "src": "/images/photos/相城区.jpg",
+    "caption": "相城区航拍",
+    "author": "MNXANL",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202309_Xiangcheng_District,_Suzhou_Aerial_View.jpg",
+    "date": "2023-09-08 13:07:56"
+  },
+  "吴江区": {
+    "src": "/images/photos/吴江区.jpg",
+    "caption": "同里古镇",
+    "author": "Nikolamikovic82",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Tongli,_China,_bridge.jpg",
+    "date": "2024-08-05 16:17:55"
+  },
+  "常熟市": {
+    "src": "/images/photos/常熟市.jpg",
+    "caption": "常熟城区",
+    "author": "MNXANL",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202308_Skyline_of_Changshu_City_Center,_Jiangsu.jpg",
+    "date": "2023-08-28 10:57:48"
+  },
+  "张家港市": {
+    "src": "/images/photos/张家港市.jpg",
+    "caption": "张家港港口",
+    "author": "Pierre Marshall",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Zhangjiagang_win_hanverky_container_terminal_port_2024-04.jpg",
+    "date": "2024-04-27 11:36:52"
+  },
+  "昆山市": {
+    "src": "/images/photos/昆山市.jpg",
+    "caption": "昆山体育场",
+    "author": "CurtNeiMeng",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kunshan_Stadium_Exterior.jpg",
+    "date": "2023-05-21"
+  },
+  "太仓市": {
+    "src": "/images/photos/太仓市.jpg",
+    "caption": "太仓城区",
+    "author": "MNXANL",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202308_Skyline_of_Taicang_City_Center,_Jiangsu.jpg",
+    "date": "2023-08-28 10:35:29"
+  }
+}

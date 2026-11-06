@@ -7,8 +7,10 @@ export function createNearImagery(scene: THREE.Scene) {
   let patch: THREE.Mesh | null = null
   let centerX = Infinity, centerZ = Infinity
   let pending = false, lastAttempt = 0
+  let latestX = 0, latestZ = 0, latestDistance = Infinity
 
   return (target: THREE.Vector3, distance: number, now: number) => {
+    latestX = target.x; latestZ = target.z; latestDistance = distance
     const terrainVisible = scene.getObjectByName('terrain')?.visible !== false
     if (patch) patch.visible = distance < 115 && terrainVisible
     if (!terrainVisible || distance >= 105 || pending || now - lastAttempt < 3000) return
@@ -27,6 +29,7 @@ export function createNearImagery(scene: THREE.Scene) {
     url.searchParams.set('format', 'jpg')
     url.searchParams.set('f', 'image')
     new THREE.TextureLoader().loadAsync(url.toString()).then(source => {
+      if (latestDistance >= 115 || Math.hypot(latestX - x, latestZ - z) > 12 || scene.getObjectByName('terrain')?.visible === false) { source.dispose(); return }
       const canvas = document.createElement('canvas')
       canvas.width = 1740; canvas.height = 1480
       const context = canvas.getContext('2d')!

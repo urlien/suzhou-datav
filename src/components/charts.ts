@@ -1,5 +1,5 @@
 import * as echarts from 'echarts'
-import { populationData } from '../data/official-stats'
+import { populationData, populationYearData } from '../data/official-stats'
 import { CANONICAL_DISTRICTS, normalizeDistrictName } from '../utils/geo'
 import { openDistrictModal } from './enhanced-interaction'
 import { filterState } from './filter'
@@ -115,15 +115,35 @@ const housingRaw: { name: string; price: number }[] = [
 
 export function initCharts() {
   initPopulationChart()
-  initIndustryChart()
-  initTrafficChart()
-  initLanduseChart()
-  initEducationChart()
-  initMedicalChart()
-  initTechChart()
-  initHousingChart()
-  initEnvironmentChart()
-  initEmploymentChart()
+  const source = 'https://tjj.suzhou.gov.cn/sztjj/tjgb/202604/3dc4b574cabd4e86b36ec5d3280e927c.shtml'
+  const panels: [string,string,string,string[],number[]][] = [
+    ['industry','2025 全市三次产业结构','%', ['第一产业','第二产业','第三产业'],[0.7,46.4,52.9]],
+    ['traffic','2025 公共交通客运规模','亿人次',['轨道交通（全市）','公交（市区）','铁路（全市）'],[7.15,2.2,1.33]],
+    ['landuse','2025 农业播种面积','千公顷',['粮食作物','经济作物'],[135.2,79.9]],
+    ['education','2025 全市学校资源','所',['幼儿园','其他各级各类学校'],[1020,868]],
+    ['medical','2025 全市医护人员','万人',['执业（助理）医师','注册护士'],[5.02,5.45]],
+    ['tech','2025 创新平台数量','家',['国家企业技术中心','省级重点实验室','创新联合体'],[37,14,327]],
+    ['housing','2025 住房与更新行动','项/个',['城市更新重点项目','老旧小区改造'],[96,117]],
+    ['environment','2025 全市生态保护','%',['建成区绿化覆盖率','林木覆盖率','湿地保护率'],[44.6,20.6,72.8]],
+    ['employment','2025 全市居民收入','元/人',['城镇居民','农村居民'],[90125,51303]],
+  ]
+  const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+    if (!entry.isIntersecting) return
+    observer.unobserve(entry.target)
+    const item = panels.find(p => 'chart-' + p[0] === entry.target.id)!
+    const [id,,unit,names,values] = item
+    const chart = echarts.init(entry.target as HTMLElement); registerChart(id,chart)
+    chart.setOption({animation:false,grid:{left:18,right:14,top:30,bottom:20,containLabel:true},tooltip:{trigger:'axis',valueFormatter:(v:unknown)=>String(v)+unit},xAxis:{type:'value',name:unit,axisLabel:{color:'#b7cdd4'},splitLine:{lineStyle:{color:'#28424f'}}},yAxis:{type:'category',data:names,axisLabel:{color:'#dbe7eb',fontSize:12}},series:[{type:'bar',data:values,itemStyle:{color:'#72bac8'},label:{show:true,position:'insideRight',color:'#102734'}}]})
+  }),{rootMargin:'120px'})
+  for (const [id,title] of panels) {
+    const el = document.getElementById('chart-'+id)
+    if (!el) continue
+    const heading = el.previousElementSibling
+    if (heading?.classList.contains('panel-title')) heading.textContent = title
+    el.dataset.verifiedSource = source
+    el.dataset.verifiedPeriod = '2025 全年 / 年末'
+    observer.observe(el)
+  }
   initChartLinking()
 }
 
@@ -162,7 +182,7 @@ function initPopulationChart() {
   registerChart('population', chart)
 
   const render = (districts: readonly string[]) => {
-    const sorted = [...districts].sort((a, b) => (populationData[b] || 0) - (populationData[a] || 0))
+    const sorted = [...districts].filter(d => populationYearData[d] === 2025).sort((a, b) => (populationData[b] || 0) - (populationData[a] || 0))
     chart.setOption({
       ...darkTheme,
       grid: baseGrid,

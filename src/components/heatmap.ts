@@ -1,5 +1,5 @@
 import * as THREE from "three"
-import { areaData, gdpData, gdpHistoryData, populationData } from "../data/official-stats"
+import { areaData, gdpData, gdpHistoryData, gdpYears, populationData, populationYearData, verifiedDistrictSources } from "../data/official-stats"
 import { CANONICAL_DISTRICTS, geoTo3D, getDistrictCoords, getTerrainHeightAtXZ, normalizeDistrictName } from "../utils/geo"
 import { registerFrameCallback } from "../scene"
 import { filterState } from "./filter"
@@ -79,12 +79,12 @@ const metricTitles: Record<string, string> = {
 }
 
 function getMetricValue(name: string, metricKey: string): number {
-  const pop = populationData[name] || 0
+  const pop = populationYearData[name] === 2025 ? populationData[name] || 0 : 0
   const area = areaData[name] || 1
   const gdp = gdpData[name] || 0
   switch (metricKey) {
     case "gdp":
-      return gdp
+      return verifiedDistrictSources[name]?.gdp ? gdp : 0
     case "population":
       return pop
     case "area":
@@ -105,9 +105,9 @@ export function addHeatmap(scene: THREE.Scene) {
 
   const densities: { name: string; density: number }[] = []
   for (const name of CANONICAL_DISTRICTS) {
-    const pop = populationData[name] || 0
+    const pop = populationYearData[name] === 2025 ? populationData[name] || 0 : 0
     const area = areaData[name] || 1
-    densities.push({ name, density: pop / area })
+    densities.push({ name, density: verifiedDistrictSources[name]?.gdp ? gdpData[name] : 0 })
   }
   const maxDensity = Math.max(...densities.map(d => d.density))
 
@@ -196,11 +196,17 @@ export function addHeatmap(scene: THREE.Scene) {
     // 同步更新区县分级设色多边形颜色（Choropleth Map）
     updateChoroplethColors(scene, intensityByDistrict)
 
+    group.children.forEach(child => {
+      const name = child.userData?.districtName
+      if (name) child.visible = filterState.selectedDistricts.includes(name) && (intensityByDistrict[name] ?? 0) > 0
+    })
     if (legendLabel) {
       const legendTitleEl = document.querySelector("#legend .legend-title")
       if (legendTitleEl) legendTitleEl.textContent = legendLabel
     }
   }
+
+  applyIntensities(Object.fromEntries(CANONICAL_DISTRICTS.map(name => [name, verifiedDistrictSources[name]?.gdp ? gdpData[name] / 5615.34 : 0])), '2025年GDP（已核展示单元）')
 
   // 响应区县与关注指标筛选事件
   document.addEventListener("filter-changed", () => {
@@ -227,7 +233,9 @@ export function addHeatmap(scene: THREE.Scene) {
 
   // 响应时间轴年份演进事件（2019–2025 3D 柱体实时联动）
   document.addEventListener("timeline-year-changed", ((e: CustomEvent<{ yearIndex: number; year: number }>) => {
-    const { yearIndex, year } = e.detail
+    const { year } = e.detail
+    const yearIndex = gdpYears.indexOf(year as typeof gdpYears[number])
+    if (yearIndex < 0) return
     const values = CANONICAL_DISTRICTS.map(name => ({
       name,
       val: gdpHistoryData[name]?.[yearIndex] || 0,

@@ -1,10 +1,10 @@
 import * as echarts from 'echarts'
-import { areaData, gdpData, populationData } from '../data/official-stats'
+import { areaData, gdpData, populationData, populationYearData, verifiedDistrictSources } from '../data/official-stats'
 import { CANONICAL_DISTRICTS } from '../utils/geo'
 import { registerChart } from './charts'
 import { filterState } from './filter'
 
-const districts = CANONICAL_DISTRICTS.map(name => {
+const districts = CANONICAL_DISTRICTS.filter(name => populationYearData[name] === 2025 && verifiedDistrictSources[name]?.gdp).map(name => {
   const pop = populationData[name] || 0
   const area = areaData[name] || 0
   const gdp = gdpData[name] || 0
@@ -20,11 +20,9 @@ const districts = CANONICAL_DISTRICTS.map(name => {
 })
 
 const allIndicators = [
-  { key: 'population', label: '常住人口', unit: '万人' },
-  { key: 'gdp', label: 'GDP总量', unit: '亿元' },
-  { key: 'area', label: '行政面积', unit: 'km²' },
-  { key: 'gdpPerCapita', label: '人均GDP', unit: '万元' },
-  { key: 'density', label: '人口密度', unit: '人/km²' },
+ {key:'population',label:'2025年末常住人口',unit:'万人'},
+ {key:'gdp',label:'2025年GDP',unit:'亿元'},
+ {key:'gdpPerCapita',label:'GDP/年末人口（非官方人均GDP）',unit:'万元'},
 ] as const
 
 export function initComparison() {
@@ -33,7 +31,7 @@ export function initComparison() {
 
   container.innerHTML = `
     <div class="comparison-header">
-      <div class="comparison-title">⚖️ 区县多维指标双城对比（受筛选器指标与区县实时联动）</div>
+      <div class="comparison-title">⚖️ 同年双城对比（仅含已核2025年GDP及人口的地区）</div>
       <div class="comparison-selects">
         <select id="compare-left" class="compare-select">
           ${districts.map(d => `<option value="${d.name}">${d.name}</option>`).join('')}

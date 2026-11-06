@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
+import { amapPlugin } from './server/amap'
 
 export default defineConfig({
+  plugins: [amapPlugin()],
   server: {
     port: 3000,
     open: true
